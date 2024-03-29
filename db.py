@@ -1,0 +1,413 @@
+import bcrypt
+import binascii
+import psycopg2
+from utils.utils import database_connect, database_close, validate_email, validate_password, admin_check, results_to_dict, db_block, update_wrapper
+
+logged_in_user = None 
+
+## common CRUD operations
+
+# open select query ... ??
+def select_query(conn, cursor, query, parameters=None, restricted=False, logged_in_user=None):
+
+    if (restricted and admin_check(logged_in_user) or not restricted): # i.e. is restricted user needs to be an admin to proceed
+        cursor.execute(query, parameters) # instead of query, (parameters) to allow data cleaning and prevent SQL injections
+
+        dictionaries = results_to_dict(cursor, "list")
+        
+        return dictionaries
+    else:
+        print("not authorized")
+        return
+"""
+e.g's
+print(db_block(select_query, "SELECT * FROM programs"))
+print(db_block(select_query, "SELECT * FROM programs WHERE id = 2"))
+print(db_block(select_query, "SELECT * FROM users", True, logged_in_user))
+"""
+
+# select all users
+def select_users(conn, cursor, logged_in_user):
+
+    if admin_check(logged_in_user): # i.e. is restricted user needs to be an admin to proceed
+        cursor.execute("SELECT * FROM users")
+
+        if cursor.rowcount == 0:
+            return "No users found", 404
+        else:
+            result = results_to_dict(cursor, "list")
+            return result, 200
+    else:
+        return "not authorized", 404
+# e.g. print(db_block(select_users, logged_in_user))
+
+
+# selecting specific user
+def select_user(conn, cursor, id, logged_in_user):
+
+    if admin_check(logged_in_user) or logged_in_user["id"] == id: # needs to be admin or same user to view
+        cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+
+        if cursor.rowcount == 0:
+            return("No instance found"), 404
+        else:
+            result = results_to_dict(cursor, "ind")
+            return result, 200
+    else:
+        return("not authorized"), 401
+# e.g. print(db_block(select_user, 19, logged_in_user))
+
+
+def update_user(conn, cursor, query, id, logged_in_user):
+    if admin_check(logged_in_user) or logged_in_user["id"] == id: # needs to be admin or same user
+        cursor.execute("UPDATE users " + query + " WHERE id = %s", (id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            return ("update successful"), 200
+        else:
+            return("No instance found"), 404
+
+    else:
+        return("not authorized"), 401
+# db_block(update_user, "SET name = 'V-man'", 30, logged_in_user)
+
+
+def delete_user(conn, cursor, id, logged_in_user):
+    if admin_check(logged_in_user) or logged_in_user["id"] == id: # needs to be admin or same user
+        cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            return "deletion successful", 200
+        else:
+            return "No instance found", 401
+
+    else:
+        return "not authorized", 404
+# e.g. db_block(delete_user, 1, logged_in_user)
+    
+
+## userProfiles
+def select_profile(conn, cursor, user_id, logged_in_user):
+
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM userprofiles WHERE user_id = %s", (user_id,))
+        if cursor.rowcount == 0:
+            return "No instance found", 404
+        result = results_to_dict(cursor, "ind")
+
+        return result, 200
+    else:
+        return "not authorised", 401
+# e.g. print(db_block(select_profile, 17, logged_in_user))
+
+def update_profile(conn, cursor, query, user_id, logged_in_user):
+    if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
+        cursor.execute("UPDATE userprofiles " + query + " WHERE user_id = %s", (user_id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            return "Update successful", 200
+        else:
+            return "No instance found", 404
+
+    else:
+        return "not authorized", 401
+# e.g. db_block(update_profile, "SET bio = 'I am from Rotterdam'", 17, logged_in_user)
+
+
+## Exercises
+# selecting all exercises
+def select_exercises(conn, cursor):
+    cursor.execute("SELECT * FROM exercises")
+
+    if cursor.rowcount == 0:
+        return "No instance found", 404
+    else:
+        result = results_to_dict(cursor, "list")
+        return result, 200
+# e.g. print(db_block(select_exercises))
+    
+def select_exercise(conn, cursor, id):
+
+    cursor.execute("SELECT * FROM exercises WHERE id = %s", (id,))
+    if cursor.rowcount == 0:
+        return "No instance found", 404
+    result = results_to_dict(cursor, "ind")
+
+    return result, 200
+
+# e.g. print(db_block(select_exercise, 17))
+    
+
+def create_exercise(conn, cursor, logged_in_user, name, image=""):
+
+    user_id = logged_in_user["id"]
+    cursor.execute("INSERT INTO exercises (name, image, creator_id) VALUES (%s, %s, %s) RETURNING id, name, image, creator_id", (name, image, user_id)) # need the returning to access in .fetchone()
+    conn.commit()
+    
+    created_exercise = cursor.fetchone() 
+
+    if created_exercise:
+        return created_exercise, 201
+    else:
+        return "Failed to create exercise", 500
+
+# e.g. db_block(create_exercise, logged_in_user, "squats", "sample image2")
+# / alt db_block(create_exercise, logged_in_user, "muay thai")
+
+
+def update_exercise(conn, cursor, query, exercise_id, logged_in_user):
+
+    cursor.execute("SELECT * FROM exercises WHERE id = %s", (exercise_id,))
+    exercise = cursor.fetchone()
+
+    if not exercise:
+        return "No instance found", 404
+    else:
+        creator_id = exercise[3]
+
+    if admin_check(logged_in_user) or logged_in_user["id"] == creator_id:
+        cursor.execute("UPDATE exercises " + query + " WHERE id = %s", (exercise_id,)) # restricted exercises that user created
+        conn.commit() 
+        if cursor.rowcount > 0:
+            return "Update successful", 200
+        else:
+            return "No instance found", 404
+    else:
+        return "not authorised", 401
+
+# e.g. db_block(update_exercise, "SET name = 'bench' WHERE name = 'dips'", 3, logged_in_user)
+
+
+def delete_exercise(conn, cursor, id, logged_in_user):
+    cursor.execute("SELECT * FROM exercises WHERE id = %s", (id,))
+    exercise = cursor.fetchone()
+
+    if not exercise:
+        return "No instance found", 404
+    else:
+        creator_id = exercise[3]
+
+    if admin_check(logged_in_user) or logged_in_user["id"] == creator_id:
+        cursor.execute("DELETE FROM exercises WHERE id = %s", (id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            return "deletion successful", 200
+        else:
+            return "No instance found", 404
+    else:
+        return "not authorised", 401
+# e.g. db_block(delete_exercise, 6, logged_in_user)
+
+
+## programs
+def create_program(conn, cursor, logged_in_user, start_date, end_date, rating, description):
+    user_id = logged_in_user["id"]
+
+    cursor.execute("INSERT INTO programs (user_id, start_date, end_date, rating, description) VALUES(%s, %s, %s, %s, %s)", (user_id, start_date, end_date, rating, description))
+    conn.commit()
+    print("new program created")
+# e.g. db_block(create_program, logged_in_user, "2000-10-20", "2000-12-20", 2, "summer_regime 2")
+
+
+# selecting all programs for specific user
+def select_programs(conn, cursor, logged_in_user, user_id):
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM programs WHERE user_id = %s", (user_id,))
+        if cursor.rowcount == 0:
+            print("No instance found")
+            return database_close(conn, cursor)
+        results = results_to_dict(cursor, "list")
+
+        database_close(conn, cursor)
+        return results
+    else:
+        print("not authorised")
+# e.g. print(db_block(select_programs, logged_in_user, 19))
+
+
+def update_program(conn, cursor, query, user_id, logged_in_user):
+    if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
+        cursor.execute("UPDATE programs " + query + " AND user_id = %s", (user_id,)) # restricted exercises that user created
+        conn.commit()
+        if cursor.rowcount > 0:
+            print("Update successful")
+        else:
+            print("No instance found")
+    else:
+        print("not authorised")
+# e.g. db_block(update_program, "SET rating = 3 WHERE id = 2", 28, logged_in_user)
+
+
+def delete_program(conn, cursor, program_id, user_id, logged_in_user):
+    if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
+        cursor.execute("DELETE FROM programs WHERE id = %s AND user_id = %s", (program_id, user_id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            print("deletion successful")
+        else:
+            print("No instance found")
+    else:
+        print("not authorised")
+# e.g. db_block(delete_program, 6, 19, logged_in_user)
+
+
+## program_exercises
+def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, reps, rating, logged_in_user):
+
+    cursor.execute("SELECT * FROM programs WHERE id = %s", (program_id,))
+    program = cursor.fetchone() 
+    cursor.execute("SELECT * FROM exercises WHERE id = %s", (exercise_id,))
+    exercise = cursor.fetchone()
+    
+    if not program:
+        print("program not found")
+        return
+    if not exercise:
+        print("exercise not found")
+        return
+
+    if program[1] == logged_in_user["id"] or admin_check(logged_in_user):
+        exercise_name = exercise[1]
+        user_id = logged_in_user["id"]
+        cursor.execute("INSERT into programs_exercises (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating))
+
+        conn.commit()
+        print("exercise added to program")
+    else:
+        print("not authorised")
+
+# e.g. db_block(add_exercise_to_program, 2, 6, "trying it for now", 3, 10, 1, logged_in_user)
+
+
+def update_exercise_program(conn, cursor, program_id, user_id, exercise_id, logged_in_user, query):
+
+    if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
+        cursor.execute("UPDATE programs_exercises " + query + " WHERE exercise_id = %s AND program_id = %s AND user_id = %s", (exercise_id, program_id, user_id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            print("Update successful")
+        else:
+            print("No instance found")
+    else:
+        print("not authorised")
+# e.g. db_block(update_exercise_program, 5, 19, 6, logged_in_user, "SET notes = 'went well so far'")
+
+
+def delete_exercise_from_program(conn, cursor, exercise_id, program_id, user_id, logged_in_user):
+
+    if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
+        cursor.execute("DELETE FROM programs_exercises WHERE exercise_id = %s AND program_id = %s AND user_id = %s", (exercise_id, program_id, user_id,))
+        conn.commit()
+        if cursor.rowcount > 0:
+            print("deletion successful")
+        else:
+            print("No instance found")
+    else:
+        print("not authorised")
+# e.g. db_block(delete_exercise_from_program, 2, 2, 28, logged_in_user)
+
+
+# shows all the users exercise_programs
+def view_users_exercise_programs(conn, cursor, logged_in_user, user_id):
+
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s", (user_id,))
+        if cursor.rowcount == 0:
+            print("No instance found")
+            return database_close(conn, cursor)
+        results = results_to_dict(cursor, "list")
+
+        return results
+    else:
+        print("not authorised")
+# e.g. print(db_block(view_users_exercise_programs, logged_in_user, 19))
+
+
+def view_specific_exercise_program(conn, cursor, logged_in_user, program_id, user_id):
+
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s AND program_id = %s", (user_id, program_id))
+        if cursor.rowcount == 0:
+            print("No instance found")
+            return database_close(conn, cursor)
+        result = results_to_dict(cursor, "ind")
+
+        return result
+    else:
+        print("not authorised")
+# e.g. print(db_block(view_specific_exercise_program, logged_in_user, 2, 28))
+
+
+## Registration / Login
+def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=""):
+        
+    if validate_email(email) and validate_password(user_password):
+        hashed_password = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
+
+        cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s) RETURNING id", (name, email, hashed_password))
+        # above, returns id of the new user, can be accessed by cursor.fetchone()[0]
+
+        user_id = cursor.fetchone()[0]
+        cursor.execute("INSERT INTO userProfiles (user_id, profile_pic, bio) VALUES (%s, %s, %s)", (user_id, profile_pic, bio)) 
+        conn.commit()
+
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user_details = cursor.fetchone()
+
+        return f'user created: {user_details}' 
+
+    elif not validate_email(email):
+        print("Invalid email address")
+    elif not validate_password(user_password):
+        print("password must be 8 characters long, and include alphabetical, numerical and 1 special character")
+
+# e.g. print(db_block(register_user, "adam", "adam@gmail.com", "adam1989$"))
+
+
+# log in
+def log_in(email, user_password):
+    conn, cursor = database_connect()
+
+    results = db_block(select_query, "SELECT * FROM users WHERE email = %s", (email,)) # select_query returns a list so need to access 1st dictionary i.e. selected user
+    if results is None:
+        print("user not found")
+    else:
+        user = results[0]
+        stored_hashed_password = user["password"]
+
+        # coming back as a hex string, so need to convert it into binary for bcrypt.checkpw ...
+        hex_string = stored_hashed_password.replace("\\x", "")
+        binary_hash = binascii.unhexlify(hex_string)
+
+        # Hashing the user's provided password for comparison
+        user_guess_encoded_password = user_password.encode('utf-8')
+
+        if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
+            logged_in_user = user
+            return logged_in_user
+        else:
+            print("passwords don't match")
+
+        return database_close(conn, cursor)
+
+# logout function
+def logout(logged_in_user):
+    if not logged_in_user:
+        return
+    
+    logged_in_user = None
+    return logged_in_user
+
+
+#logging in / out example
+
+# logged_in_user = log_in("wellspaul554@gmail.com", "wells1989%")
+# logged_in_user = log_in("frank@gmail.com", "frank1989$")
+# logged_in_user = log_in("vasile@gmail.com", "vasile1989$")
+
+
+if __name__ == "__main__":
+    logged_in_user = log_in("wellspaul554@gmail.com", "wells1989%")
+    # logged_in_user = log_in("vasile@gmail.com", "vasile1989$")
+
+    print(db_block(select_exercises))
