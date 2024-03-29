@@ -121,7 +121,7 @@ def exercises():
         data = request.get_json()
         name = data.get('name')
         image = data.get('image')
-
+        
         result = db_block(create_exercise, logged_in_user, name, image)
 
         return jsonify({'result': result})
@@ -155,3 +155,113 @@ def exercise(id):
         else:
             return 404
 
+@app.route('/programs/<int:user_id>', methods=["GET", "POST"])
+def programs_get_and_post(user_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "need to log in first!", 401
+        
+    if request.method == "GET":
+        result = db_block(select_programs, logged_in_user, user_id)
+        if result:
+                return result
+        
+    elif request.method == "POST":
+        data = request.get_json()
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        rating = data.get('rating')
+        description = data.get('description')
+
+        result = db_block(create_program, logged_in_user, start_date, end_date, rating, description)
+
+        return jsonify({'result': result})
+
+
+@app.route('/programs/<int:program_id>', methods=["PUT", "DELETE"])
+def programs_update_and_delete(program_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "need to log in first!", 401
+    
+    if request.method == "PUT":
+        return update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
+
+
+    elif request.method == "DELETE":
+        result = db_block(delete_program, program_id, logged_in_user)
+        if result:
+            return result
+        else:
+            return 404
+        
+## program_exercise operations
+@app.route('/programs/details/<int:program_id>/<int:exercise_id>', methods=["POST", "PUT", "DELETE"])
+def prog_exercises(program_id, exercise_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "need to log in first!", 401
+
+    if request.method == "POST":
+        data = request.get_json()
+        notes = data.get('notes')
+        sets = data.get('sets')
+        reps = data.get('reps')
+        rating = data.get('rating')
+
+        result = db_block(add_exercise_to_program, program_id, exercise_id, notes, sets, reps, rating, logged_in_user)
+
+        return jsonify({'result': result})
+    
+    elif request.method == "PUT":
+        data = request.get_json()
+        allowed_fields = ["notes", "sets", "reps", "rating"]
+
+        fields = {}
+        for field in allowed_fields:
+            if field in data:
+                fields[field] = data[field]
+
+        query = "SET "
+        num_fields = len(fields)
+        for index, (key, value) in enumerate(fields.items()):
+            if value is not None:
+                query += f"{key} = '{value}'"
+                if index < num_fields - 1:
+                    query += ", "
+
+        result = db_block(update_exercise_program, program_id, exercise_id, logged_in_user, query)
+        if result:
+            return result
+        else:
+            return 404
+        
+    elif request.method == "DELETE":
+        result = db_block(delete_exercise_from_program, program_id, exercise_id, logged_in_user)
+
+        if result:
+            return result
+        else: return 404
+        
+
+# getting users_exercise_programs info (ie. sets and reps etc)
+@app.route("/programs/details/<int:user_id>/<int:program_id>", methods=["GET"])
+def get_exercise_programs(user_id, program_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "need to log in first!", 401
+
+    if program_id == 0:
+        # returning all a users programs_exercises
+        result = db_block(view_users_exercise_programs, logged_in_user, user_id)
+        if result:
+            return result
+        else:
+            return 404
+    else:
+        # returning a specific users program with exercises etc
+        result = db_block(view_specific_exercise_program, logged_in_user, program_id, user_id)
+        if result:
+            return result
+        else:
+            return 404
