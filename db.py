@@ -87,6 +87,7 @@ def delete_user(conn, cursor, id, logged_in_user):
     
 
 ## userProfiles
+
 def select_profile(conn, cursor, user_id, logged_in_user):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
@@ -398,8 +399,28 @@ def view_programs_exercises(conn, cursor, logged_in_user, program_id, user_id):
 
 
 ## Registration / Login
+
+def search_for_user(conn, cursor, email):
+    cursor.execute("SELECT * FROM users")
+
+    if cursor.rowcount == 0:
+        return "No users found", 404
+    else:
+        results = results_to_dict(cursor, "list")
+        for user in results:
+            if user['email'] == email:
+                return user
+        return "User not found for email", 404
+# print(db_block(search_for_user, "wellspaul554@gmail.com"))
+
+# Register
 def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=""):
-        
+    
+    user_check = db_block(search_for_user, email)
+
+    if isinstance(user_check, dict):
+        return "User already exists, please log in", 409
+
     if validate_email(email) and validate_password(user_password):
         hashed_password = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
 
@@ -411,9 +432,14 @@ def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=
         conn.commit()
 
         cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-        user_details = cursor.fetchone()
+    
+        if cursor.rowcount == 0:
+            return "internal error", 500
+        else:
+            user = results_to_dict(cursor, "ind")
 
-        return f'user created: {user_details}', 200
+            logged_in_user = user
+            return logged_in_user, 200
 
     elif not validate_email(email):
         return f"Invalid email address", 400
@@ -422,32 +448,29 @@ def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=
 
 # e.g. print(db_block(register_user, "adam", "adam@gmail.com", "adam1989$"))
 
-
 # log in
-def log_in(email, user_password):
-    conn, cursor = database_connect()
+def log_in(conn, cursor, email, user_password):
 
-    results = db_block(select_query, "SELECT * FROM users WHERE email = %s", (email,)) # select_query returns a list so need to access 1st dictionary i.e. selected user
-    if results is None:
-        print("user not found")
+    user = db_block(search_for_user, email)
+
+    if not isinstance(user, dict):
+        return "Error finding user", 404
+
+    stored_hashed_password = user["password"]
+
+    # coming back as a hex string, so need to convert it into binary for bcrypt.checkpw ...
+    hex_string = stored_hashed_password.replace("\\x", "")
+    binary_hash = binascii.unhexlify(hex_string)
+
+    # Hashing the user's provided password for comparison
+    user_guess_encoded_password = user_password.encode('utf-8')
+
+    if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
+        logged_in_user = user
+        return logged_in_user, 200
     else:
-        user = results[0]
-        stored_hashed_password = user["password"]
-
-        # coming back as a hex string, so need to convert it into binary for bcrypt.checkpw ...
-        hex_string = stored_hashed_password.replace("\\x", "")
-        binary_hash = binascii.unhexlify(hex_string)
-
-        # Hashing the user's provided password for comparison
-        user_guess_encoded_password = user_password.encode('utf-8')
-
-        if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
-            logged_in_user = user
-            return logged_in_user
-        else:
-            print("passwords don't match")
-
-        return database_close(conn, cursor)
+        return "passwords don't match", 400
+# print(db_block(log_in, "wellspaul554@gmail.com", "wells1989%"))
 
 # logout function
 def logout(logged_in_user):
@@ -459,13 +482,14 @@ def logout(logged_in_user):
 
 
 #logging in / out example
+# logged_in_user = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
 
-# logged_in_user = log_in("wellspaul554@gmail.com", "wells1989%")
-# logged_in_user = log_in("frank@gmail.com", "frank1989$")
-# logged_in_user = log_in("vasile@gmail.com", "vasile1989$")
+# logged_in_user = db_block(log_in, "frank@gmail.com", "frank1989$")
+# logged_in_user = db_block(log_in, "vasile@gmail.com", "vasile1989$")
 
 
 if __name__ == "__main__":
-    logged_in_user = log_in("wellspaul554@gmail.com", "wells1989%")
-    # logged_in_user = log_in("vasile@gmail.com", "vasile1989$")
-   
+    logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
+    print(logged_in_user)
+
+    print(db_block(select_profile, 17, logged_in_user))

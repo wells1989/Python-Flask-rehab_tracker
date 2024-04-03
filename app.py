@@ -15,7 +15,6 @@ def test():
 def homepage():
     logged_in_user = session.get('logged_in_user')
     if logged_in_user:
-
         return render_template('homepage.html', logged_in_user = logged_in_user)
     else:
         return render_template('login.html')
@@ -23,7 +22,7 @@ def homepage():
 ## Register / login / logout
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    
+     
     if request.method == "GET":
         return render_template("register.html")
 
@@ -34,15 +33,17 @@ def register():
         
         name, email, password, profile_pic, bio = values['email'], values["email"], values['password'], values['profile_pic'], values['bio']
          
-        result, status_code = db_block(register_user, name, email, password, profile_pic, bio)
-
+        logged_in_user, status_code = db_block(register_user, name, email, password, profile_pic, bio)
+        
+        # dev only
         if not request.form:
-            return jsonify({'result': result})
+            return jsonify({'result': logged_in_user})
         
         if status_code != 200:
-            return render_template("register.html"), status_code
-        
-        return redirect("/", code=301)
+            return render_template("register.html", error=logged_in_user)
+        else:
+            session['logged_in_user'] = logged_in_user 
+            return redirect("/", code=301)
     
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -56,26 +57,27 @@ def login():
         
         email, password = values['email'], values['password']
 
-        logged_in_user = log_in(email, password)
+        logged_in_user, status_code = db_block(log_in, email, password)
 
-        if logged_in_user:
+        if status_code != 200:
+            return render_template('login.html', error=logged_in_user)
+        else:
             session['logged_in_user'] = logged_in_user 
             # dev only
             if not request.form:
                 return f'logged_in_user: {logged_in_user}', 200
             
             return redirect("/", code=301) # NOTE: need 301 status for successful redirects, otherwise will get continued "should be redirected" message ...
-        else:
-            return 'Invalid email or password', 401
 
 @app.route('/logout', methods=["POST"])
 def logout():
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
-        return f'no user logged in', 200
+        return f'no user logged in', 400
     else:
         session["logged_in_user"] = None
-        return f'user logged out', 200
+        return redirect("/", code=301)
+        # dev only return f'user logged out', 200
 
 ## User routes
 @app.route('/users', methods=["GET"])
@@ -95,15 +97,18 @@ def users():
 @app.route("/users/<int:id>", methods=["GET", "PUT", "DELETE"])
 def user(id):
     logged_in_user = session.get('logged_in_user')
+    print(logged_in_user)
     if not logged_in_user:
         return "Unauthorised", 401
 
     if request.method == "GET":
         result = db_block(view_user, id, logged_in_user)
         if result:
-            return result
+            profile = db_block(select_profile, id, logged_in_user)[0]
+            print(profile)
+            return render_template("profile_page.html", user=logged_in_user, profile=profile)
         else:
-            return "User not found", 404
+            return redirect("/")
         
     elif request.method == "PUT":
         return update_wrapper(request, ["name", "email", "password"], id, update_user, logged_in_user)
@@ -123,10 +128,14 @@ def profile(user_id):
     if not logged_in_user:
         return "Unauthorized", 401
     
-    if request.method == "GET":
-        result = db_block(select_profile, user_id, logged_in_user)
-        if result:
-            return result
+    if request.method == "GET": 
+        profile = db_block(select_profile, user_id, logged_in_user)
+        if profile:
+            # dev only, for postman queries
+            if request.accept_mimetypes.accept_json:
+                return jsonify({"user": logged_in_user, "profile": profile}), 200
+            else:
+                return render_template("profile_page.html", user=user, profile=profile)
         else:
             return 404
 

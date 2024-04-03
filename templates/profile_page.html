@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<h1 class="bg-blue-500 m-20"> testing template</h1>
+
+
+<div class="text-black">
+    <span>User details</span>
+    <span class="mr-4">{{ user.email }}</span>
+    <span>{{ user.name }}</span>
+</div>
+
+<div class="text-red">
+    <span>profile details</span>
+    <span class="mr-4">{{ profile.profile_pic }}</span>
+    <span>{{ profile.bio }}</span>
+</div>
+
+{% endblock %}
