@@ -1,1 +1,12 @@
-<h1> testing template</h1>
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<h1 class="bg-blue-500 m-20"> testing template</h1>
+
+
+    <p>{{ logged_in_user.name }} </p>
+    <p>{{ logged_in_user.is_admin }} </p>
+
+{% endblock %}

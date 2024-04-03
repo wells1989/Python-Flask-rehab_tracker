@@ -413,12 +413,12 @@ def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=
         cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         user_details = cursor.fetchone()
 
-        return f'user created: {user_details}' 
+        return f'user created: {user_details}', 200
 
     elif not validate_email(email):
-        print("Invalid email address")
+        return f"Invalid email address", 400
     elif not validate_password(user_password):
-        print("password must be 8 characters long, and include alphabetical, numerical and 1 special character")
+        return "password must be 8 characters long, and include alphabetical, numerical and 1 special character", 400
 
 # e.g. print(db_block(register_user, "adam", "adam@gmail.com", "adam1989$"))
 

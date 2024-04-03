@@ -116,4 +116,17 @@ def update_wrapper(request, allowed_fields, id_to_update, update_function, logge
     result = db_block(update_function, query, id_to_update, logged_in_user)
 
     return result
+
+
+def process_request(request, *field_names):
+    if request.form:
+        data = request.form
+    else:
+        data = request.get_json()
+
+    values = {}
+    for field_name in field_names:
+        values[field_name] = data.get(field_name)
+
+    return values
     

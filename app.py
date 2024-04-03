@@ -1,47 +1,72 @@
 from flask import Flask, jsonify, request
 from db import *
-from flask import session, render_template
+from flask import session, render_template, redirect
+from utils.utils import process_request
 
 app = Flask(__name__)
 
-# test route
-@app.route('/', methods=["GET"])
+# DEV ONLY test route
+@app.route('/test', methods=["GET"])
 def test():
+    return render_template('test.html')
+
+# homepage route
+@app.route('/', methods=["GET"])
+def homepage():
     logged_in_user = session.get('logged_in_user')
     if logged_in_user:
-        return render_template('homepage.html')
+
+        return render_template('homepage.html', logged_in_user = logged_in_user)
     else:
         return render_template('login.html')
-
-
+ 
 ## Register / login / logout
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
-    profile_pic = data.get('profile_pic')
-    bio = data.get('bio')
     
-    result = db_block(register_user, name, email, password, profile_pic, bio)
+    if request.method == "GET":
+        return render_template("register.html")
 
-    return jsonify({'result': result})
+    if request.method == "POST":
 
-@app.route('/login', methods=['POST'])
+        fields = ('name', 'email', 'password', 'profile_pic', 'bio')
+        values = process_request(request, *fields)
+        
+        name, email, password, profile_pic, bio = values['email'], values["email"], values['password'], values['profile_pic'], values['bio']
+         
+        result, status_code = db_block(register_user, name, email, password, profile_pic, bio)
+
+        if not request.form:
+            return jsonify({'result': result})
+        
+        if status_code != 200:
+            return render_template("register.html"), status_code
+        
+        return redirect("/", code=301)
+    
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
+    if request.method == "GET":
+        return render_template('login.html')
 
-    logged_in_user = log_in(email, password)
+    if request.method == "POST":
+        fields = ('email', 'password')
+        values = process_request(request, *fields)
+        
+        email, password = values['email'], values['password']
 
-    if logged_in_user:
-        session['logged_in_user'] = logged_in_user 
+        logged_in_user = log_in(email, password)
 
-        return f'logged_in_user: {logged_in_user}', 200
-    else:
-        return 'Invalid email or password', 401
+        if logged_in_user:
+            session['logged_in_user'] = logged_in_user 
+            # dev only
+            if not request.form:
+                return f'logged_in_user: {logged_in_user}', 200
+            
+            return redirect("/", code=301) # NOTE: need 301 status for successful redirects, otherwise will get continued "should be redirected" message ...
+        else:
+            return 'Invalid email or password', 401
 
 @app.route('/logout', methods=["POST"])
 def logout():
@@ -51,7 +76,6 @@ def logout():
     else:
         session["logged_in_user"] = None
         return f'user logged out', 200
-
 
 ## User routes
 @app.route('/users', methods=["GET"])
@@ -65,7 +89,6 @@ def users():
             return result
     else:
         return 404
-
 
 
 ## individual User routes
@@ -93,7 +116,6 @@ def user(id):
         else:
             return 404
 
-
 ## User profile routes
 @app.route("/users/profiles/<int:user_id>", methods=["GET", "PUT"]) # user_id, NOT profile id
 def profile(user_id):
@@ -110,7 +132,6 @@ def profile(user_id):
 
     elif request.method == "PUT":
         return update_wrapper(request, ["profile_pic", "bio"], user_id, update_profile, logged_in_user)
-
 
 ## exercise routes (viewing exercises or posting new one)
 @app.route('/exercises', methods=["GET", "POST"])
@@ -185,7 +206,6 @@ def programs_get_and_post(user_id):
 
         return jsonify({'result': result})
 
-
 # individual program routes (getting, updating, deleting)
 @app.route('/programs/program/<int:user_id>/<int:program_id>', methods=["GET"])
 def get_user_program(user_id, program_id):
@@ -205,7 +225,6 @@ def programs_update_and_delete(program_id):
     
     if request.method == "PUT":
         return update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
-
 
     elif request.method == "DELETE":
         result = db_block(delete_program, program_id, logged_in_user)
@@ -285,3 +304,5 @@ def get_exercise_programs(user_id, program_id):
             return result
         else:
             return 404
+
+
