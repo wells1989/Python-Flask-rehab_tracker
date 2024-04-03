@@ -1,13 +1,17 @@
 from flask import Flask, jsonify, request
 from db import *
-from flask import session
+from flask import session, render_template
 
 app = Flask(__name__)
 
 # test route
 @app.route('/', methods=["GET"])
 def test():
-    return f'route working'
+    logged_in_user = session.get('logged_in_user')
+    if logged_in_user:
+        return render_template('homepage.html')
+    else:
+        return render_template('login.html')
 
 
 ## Register / login / logout
@@ -53,14 +57,15 @@ def logout():
 @app.route('/users', methods=["GET"])
 def users():
     logged_in_user = session.get('logged_in_user')
-    if logged_in_user:
-        result = db_block(select_users, logged_in_user)
-        if result:
-                return result
-        else:
-            return 404
+    if not logged_in_user:
+        return "Unauthorised", 401
+
+    result = db_block(view_all_users, logged_in_user)
+    if result:
+            return result
     else:
-        return "Unauthorized", 401
+        return 404
+
 
 
 ## individual User routes
@@ -71,7 +76,7 @@ def user(id):
         return "Unauthorised", 401
 
     if request.method == "GET":
-        result = db_block(select_user, id, logged_in_user)
+        result = db_block(view_user, id, logged_in_user)
         if result:
             return result
         else:
@@ -115,7 +120,7 @@ def exercises():
         return "need to log in first!", 401
 
     if request.method == "GET":
-        result = db_block(select_exercises)
+        result = db_block(view_all_exercises)
         if result:
                 return result
     elif request.method == "POST":
@@ -132,7 +137,7 @@ def exercises():
 @app.route('/exercises/<int:id>', methods=["GET", "PUT", "DELETE"])
 def exercise(id):
     if request.method == "GET":
-        result = db_block(select_exercise, id)
+        result = db_block(view_exercise, id)
         if result:
                 return result
         else:
@@ -165,7 +170,7 @@ def programs_get_and_post(user_id):
         return "need to log in first!", 401
         
     if request.method == "GET":
-        result = db_block(select_programs, logged_in_user, user_id)
+        result = db_block(view_all_user_programs, logged_in_user, user_id)
         if result:
                 return result
         
@@ -188,7 +193,7 @@ def get_user_program(user_id, program_id):
     if not logged_in_user:
         return "need to log in first!", 401
 
-    result = db_block(select_user_program, logged_in_user, user_id, program_id)
+    result = db_block(view_program, logged_in_user, user_id, program_id)
     if result:
             return result
 
@@ -245,7 +250,7 @@ def prog_exercises(program_id, exercise_id):
                 if index < num_fields - 1:
                     query += ", "
 
-        result = db_block(update_exercise_program, program_id, exercise_id, logged_in_user, query)
+        result = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query)
         if result:
             return result
         else:
@@ -268,14 +273,14 @@ def get_exercise_programs(user_id, program_id):
 
     if program_id == 0:
         # returning all a users programs_exercises
-        result = db_block(view_users_exercise_programs, logged_in_user, user_id)
+        result = db_block(view_users_past_exercises, logged_in_user, user_id)
         if result:
             return result
         else:
             return 404
     else:
         # returning a specific users program with exercises etc
-        result = db_block(view_specific_exercise_program, logged_in_user, program_id, user_id)
+        result = db_block(view_programs_exercises, logged_in_user, program_id, user_id)
         if result:
             return result
         else:

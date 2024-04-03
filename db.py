@@ -27,7 +27,7 @@ print(db_block(select_query, "SELECT * FROM users", True, logged_in_user))
 """
 
 # select all users
-def select_users(conn, cursor, logged_in_user):
+def view_all_users(conn, cursor, logged_in_user):
 
     if admin_check(logged_in_user): # i.e. is restricted user needs to be an admin to proceed
         cursor.execute("SELECT * FROM users")
@@ -39,11 +39,11 @@ def select_users(conn, cursor, logged_in_user):
             return result, 200
     else:
         return "not authorized", 404
-# e.g. print(db_block(select_users, logged_in_user))
+# e.g. print(db_block(view_all_users, logged_in_user))
 
 
 # selecting specific user
-def select_user(conn, cursor, id, logged_in_user):
+def view_user(conn, cursor, id, logged_in_user):
 
     if admin_check(logged_in_user) or logged_in_user["id"] == id: # needs to be admin or same user to view
         cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
@@ -55,7 +55,7 @@ def select_user(conn, cursor, id, logged_in_user):
             return result, 200
     else:
         return("not authorized"), 401
-# e.g. print(db_block(select_user, 19, logged_in_user))
+# e.g. print(db_block(view_user, 19, logged_in_user))
 
 
 def update_user(conn, cursor, query, id, logged_in_user):
@@ -116,7 +116,7 @@ def update_profile(conn, cursor, query, user_id, logged_in_user):
 
 ## Exercises
 # selecting all exercises
-def select_exercises(conn, cursor):
+def view_all_exercises(conn, cursor):
     cursor.execute("SELECT * FROM exercises")
 
     if cursor.rowcount == 0:
@@ -124,9 +124,9 @@ def select_exercises(conn, cursor):
     else:
         result = results_to_dict(cursor, "list")
         return result, 200
-# e.g. print(db_block(select_exercises))
+# e.g. print(db_block(view_all_exercises))
     
-def select_exercise(conn, cursor, id):
+def view_exercise(conn, cursor, id):
 
     cursor.execute("SELECT * FROM exercises WHERE id = %s", (id,))
     if cursor.rowcount == 0:
@@ -135,7 +135,7 @@ def select_exercise(conn, cursor, id):
 
     return result, 200
 
-# e.g. print(db_block(select_exercise, 17))
+# e.g. print(db_block(view_exercise, 17))
     
 
 def create_exercise(conn, cursor, logged_in_user, name, image=""):
@@ -215,7 +215,7 @@ def create_program(conn, cursor, logged_in_user, start_date, end_date, rating, d
 
 
 # selecting all programs for specific user
-def select_programs(conn, cursor, logged_in_user, user_id):
+def view_all_user_programs(conn, cursor, logged_in_user, user_id):
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM programs WHERE user_id = %s ORDER BY start_date DESC", (user_id,))
         if cursor.rowcount == 0:
@@ -226,11 +226,11 @@ def select_programs(conn, cursor, logged_in_user, user_id):
             return results, 200
     else:
         return "not authorised", 401
-# e.g. print(db_block(select_programs, logged_in_user, 19))
+# e.g. print(db_block(view_all_user_programs, logged_in_user, 19))
 
 
 # selecting a specific user's program
-def select_user_program(conn, cursor, logged_in_user, user_id, program_id):
+def view_program(conn, cursor, logged_in_user, user_id, program_id):
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM programs WHERE user_id = %s AND id = %s LIMIT 1", (user_id, program_id,))
         if cursor.rowcount == 0:
@@ -241,7 +241,7 @@ def select_user_program(conn, cursor, logged_in_user, user_id, program_id):
             return result, 200
     else:
         return "not authorised", 401
-    #  print(db_block(select_user_program, logged_in_user, 28, 10))
+    #  print(db_block(view_program, logged_in_user, 28, 10))
 
 
 def update_program(conn, cursor, query, program_id, logged_in_user):
@@ -320,7 +320,7 @@ def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, 
 # e.g. db_block(add_exercise_to_program, 2, 6, "trying it for now", 3, 10, 1, logged_in_user)
 
 
-def update_exercise_program(conn, cursor, program_id, exercise_id, logged_in_user, query):
+def update_exercise_in_program(conn, cursor, program_id, exercise_id, logged_in_user, query):
 
     cursor.execute("SELECT * FROM programs WHERE id = %s", (program_id,))
     program = cursor.fetchone() 
@@ -341,7 +341,7 @@ def update_exercise_program(conn, cursor, program_id, exercise_id, logged_in_use
             return "No instance found", 404
     else:
         return "not authorised", 401
-# e.g. db_block(update_exercise_program, 7, 4, logged_in_user, "SET notes = 'boo that it went awfully'")
+# e.g. db_block(update_exercise_in_program, 7, 4, logged_in_user, "SET notes = 'boo that it went awfully'")
 
 
 def delete_exercise_from_program(conn, cursor, program_id, exercise_id, logged_in_user):
@@ -369,7 +369,7 @@ def delete_exercise_from_program(conn, cursor, program_id, exercise_id, logged_i
 
 
 # shows all the users exercise_programs
-def view_users_exercise_programs(conn, cursor, logged_in_user, user_id):
+def view_users_past_exercises(conn, cursor, logged_in_user, user_id):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s", (user_id,))
@@ -380,10 +380,10 @@ def view_users_exercise_programs(conn, cursor, logged_in_user, user_id):
         return results, 200
     else:
         return "not authorised", 401
-# e.g. print(db_block(view_users_exercise_programs, logged_in_user, 19))
+# e.g. print(db_block(view_users_past_exercises, logged_in_user, 19))
 
 
-def view_specific_exercise_program(conn, cursor, logged_in_user, program_id, user_id):
+def view_programs_exercises(conn, cursor, logged_in_user, program_id, user_id):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s AND program_id = %s", (user_id, program_id))
@@ -394,7 +394,7 @@ def view_specific_exercise_program(conn, cursor, logged_in_user, program_id, use
         return result
     else:
         return "not authorised", 401
-# e.g. print(db_block(view_specific_exercise_program, logged_in_user, 2, 28))
+# e.g. print(db_block(view_programs_exercises, logged_in_user, 2, 28))
 
 
 ## Registration / Login
