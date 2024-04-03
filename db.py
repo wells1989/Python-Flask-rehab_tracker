@@ -217,7 +217,7 @@ def create_program(conn, cursor, logged_in_user, start_date, end_date, rating, d
 # selecting all programs for specific user
 def select_programs(conn, cursor, logged_in_user, user_id):
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
-        cursor.execute("SELECT * FROM programs WHERE user_id = %s", (user_id,))
+        cursor.execute("SELECT * FROM programs WHERE user_id = %s ORDER BY start_date DESC", (user_id,))
         if cursor.rowcount == 0:
             return "No instance found", 404
         else:
@@ -227,6 +227,21 @@ def select_programs(conn, cursor, logged_in_user, user_id):
     else:
         return "not authorised", 401
 # e.g. print(db_block(select_programs, logged_in_user, 19))
+
+
+# selecting a specific user's program
+def select_user_program(conn, cursor, logged_in_user, user_id, program_id):
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM programs WHERE user_id = %s AND id = %s LIMIT 1", (user_id, program_id,))
+        if cursor.rowcount == 0:
+            return "No instance found", 404
+        else:
+            result = results_to_dict(cursor, "ind")
+
+            return result, 200
+    else:
+        return "not authorised", 401
+    #  print(db_block(select_user_program, logged_in_user, 28, 10))
 
 
 def update_program(conn, cursor, query, program_id, logged_in_user):
@@ -453,3 +468,4 @@ def logout(logged_in_user):
 if __name__ == "__main__":
     logged_in_user = log_in("wellspaul554@gmail.com", "wells1989%")
     # logged_in_user = log_in("vasile@gmail.com", "vasile1989$")
+   

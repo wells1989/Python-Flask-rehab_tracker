@@ -63,6 +63,7 @@ def users():
         return "Unauthorized", 401
 
 
+## individual User routes
 @app.route("/users/<int:id>", methods=["GET", "PUT", "DELETE"])
 def user(id):
     logged_in_user = session.get('logged_in_user')
@@ -154,7 +155,9 @@ def exercise(id):
             return result
         else:
             return 404
+        
 
+# User program routes
 @app.route('/programs/<int:user_id>', methods=["GET", "POST"])
 def programs_get_and_post(user_id):
     logged_in_user = session.get('logged_in_user')
@@ -178,6 +181,17 @@ def programs_get_and_post(user_id):
         return jsonify({'result': result})
 
 
+# individual program routes (getting, updating, deleting)
+@app.route('/programs/program/<int:user_id>/<int:program_id>', methods=["GET"])
+def get_user_program(user_id, program_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "need to log in first!", 401
+
+    result = db_block(select_user_program, logged_in_user, user_id, program_id)
+    if result:
+            return result
+
 @app.route('/programs/<int:program_id>', methods=["PUT", "DELETE"])
 def programs_update_and_delete(program_id):
     logged_in_user = session.get('logged_in_user')
@@ -195,7 +209,8 @@ def programs_update_and_delete(program_id):
         else:
             return 404
         
-## program_exercise operations
+
+## program_exercise routes (adding, updating or deleting an exercise from a program)
 @app.route('/programs/details/<int:program_id>/<int:exercise_id>', methods=["POST", "PUT", "DELETE"])
 def prog_exercises(program_id, exercise_id):
     logged_in_user = session.get('logged_in_user')
@@ -244,7 +259,7 @@ def prog_exercises(program_id, exercise_id):
         else: return 404
         
 
-# getting users_exercise_programs info (ie. sets and reps etc)
+# getting exercises and details in a program (ie. sets and reps etc)
 @app.route("/programs/details/<int:user_id>/<int:program_id>", methods=["GET"])
 def get_exercise_programs(user_id, program_id):
     logged_in_user = session.get('logged_in_user')
