@@ -58,9 +58,9 @@ def view_user(conn, cursor, id, logged_in_user):
 # e.g. print(db_block(view_user, 19, logged_in_user))
 
 
-def update_user(conn, cursor, query, id, logged_in_user):
+def update_user(conn, cursor, query, id, values, logged_in_user):
     if admin_check(logged_in_user) or logged_in_user["id"] == id: # needs to be admin or same user
-        cursor.execute("UPDATE users " + query + " WHERE id = %s", (id,))
+        cursor.execute("UPDATE users " + query + " WHERE id = %s", values + [id])
         conn.commit()
         if cursor.rowcount > 0:
             return ("update successful"), 200
@@ -69,7 +69,7 @@ def update_user(conn, cursor, query, id, logged_in_user):
 
     else:
         return("not authorized"), 401
-# db_block(update_user, "SET name = 'V-man'", 30, logged_in_user)
+# OLD pre values: db_block(update_user, "SET name = 'V-man'", 30, logged_in_user)
 
 
 def delete_user(conn, cursor, id, logged_in_user):
@@ -101,9 +101,9 @@ def select_profile(conn, cursor, user_id, logged_in_user):
         return "not authorised", 401
 # e.g. print(db_block(select_profile, 17, logged_in_user))
 
-def update_profile(conn, cursor, query, user_id, logged_in_user):
+def update_profile(conn, cursor, query, user_id, values, logged_in_user):
     if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
-        cursor.execute("UPDATE userprofiles " + query + " WHERE user_id = %s", (user_id,))
+        cursor.execute("UPDATE userprofiles " + query + " WHERE user_id = %s", values + [user_id])
         conn.commit()
         if cursor.rowcount > 0:
             return "Update successful", 200
@@ -112,7 +112,7 @@ def update_profile(conn, cursor, query, user_id, logged_in_user):
 
     else:
         return "not authorized", 401
-# e.g. db_block(update_profile, "SET bio = 'I am from Rotterdam'", 17, logged_in_user)
+# OLD PRE values e.g. db_block(update_profile, "SET bio = 'I am from Rotterdam'", 17, logged_in_user)
 
 
 ## Exercises

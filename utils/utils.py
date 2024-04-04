@@ -111,11 +111,13 @@ def update_wrapper(request, allowed_fields, id_to_update, update_function, logge
     num_fields = len(fields)
     for index, (key, value) in enumerate(fields.items()):
         if value is not None:
-            query += f"{key} = '{value}'"
+            query += f"{key} = %s"
             if index < num_fields - 1:
                 query += ", "
 
-    result = db_block(update_function, query, id_to_update, logged_in_user)
+    values = [value for value in fields.values() if value is not None]
+
+    result = db_block(update_function, query, id_to_update, values, logged_in_user)
 
     return result
 
