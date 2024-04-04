@@ -31,7 +31,7 @@ def register():
         fields = ('name', 'email', 'password', 'profile_pic', 'bio')
         values = process_request(request, *fields)
         
-        name, email, password, profile_pic, bio = values['email'], values["email"], values['password'], values['profile_pic'], values['bio']
+        name, email, password, profile_pic, bio = values['name'], values["email"], values['password'], values['profile_pic'], values['bio']
          
         logged_in_user, status_code = db_block(register_user, name, email, password, profile_pic, bio)
         
@@ -79,6 +79,10 @@ def logout():
         return redirect("/", code=301)
         # dev only return f'user logged out', 200
 
+@app.route('/deleted', methods=["GET", "DELETE"])
+def deleted():
+    return render_template("user_deleted.html")
+
 ## User routes
 @app.route('/users', methods=["GET"])
 def users():
@@ -97,7 +101,6 @@ def users():
 @app.route("/users/<int:id>", methods=["GET", "PUT", "DELETE"])
 def user(id):
     logged_in_user = session.get('logged_in_user')
-    print(logged_in_user)
     if not logged_in_user:
         return "Unauthorised", 401
 
@@ -105,19 +108,41 @@ def user(id):
         result = db_block(view_user, id, logged_in_user)
         if result:
             profile = db_block(select_profile, id, logged_in_user)[0]
-            print(profile)
             return render_template("profile_page.html", user=logged_in_user, profile=profile)
-        else:
+        else: 
             return redirect("/")
         
     elif request.method == "PUT":
-        return update_wrapper(request, ["name", "email", "password"], id, update_user, logged_in_user)
         
+        result, status_code = update_wrapper(request, ["name", "email"], id, update_user, logged_in_user)
+
+        if status_code > 400:
+            return "Failed to update user", status_code
+
+        updated_user, status_code = db_block(view_user, id, logged_in_user)
+
+        session['logged_in_user'] = updated_user 
+        # dev only for postman testing
+        user_agent = request.headers.get('User-Agent', '')
+        if 'Postman' in user_agent:
+            return "User updated successfully", 200
+            # slight BUG in that postman updates aren't reflected until user logs out and in again
+        else:
+            return updated_user, 200
+    
     elif request.method == "DELETE":
         
-        result = db_block(delete_user, id, logged_in_user)
-        if result:
-            return result
+        result, status_code = db_block(delete_user, id, logged_in_user)
+        if status_code != 200:
+            return result, status_code
+        elif result:
+            session["logged_in_user"] = None
+
+            # dev only, postman testing
+            user_agent = request.headers.get('User-Agent', '')
+            if 'Postman' in user_agent:
+                return "User deleted successfully", 200
+            return redirect("/deleted")
         else:
             return 404
 

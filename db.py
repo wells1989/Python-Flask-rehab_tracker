@@ -483,13 +483,14 @@ def logout(logged_in_user):
 
 #logging in / out example
 # logged_in_user = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
+## # vasile password no longer working due to hashing issue logged_in_user = db_block(log_in, "vasile@gmail.com", "vasile1989$")
 
-# logged_in_user = db_block(log_in, "frank@gmail.com", "frank1989$")
-# logged_in_user = db_block(log_in, "vasile@gmail.com", "vasile1989$")
+# logged_in_user = db_block(log_in, "frankie@gmail.com", "frank1989$")
+# logged_in_user = db_block(log_in, "pantuda@gmail.com", ""password": "testing123%")
 
 
 if __name__ == "__main__":
-    logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
-    print(logged_in_user)
+    # logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
 
-    print(db_block(select_profile, 17, logged_in_user))
+    
+    print(logged_in_user)

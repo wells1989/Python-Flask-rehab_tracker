@@ -2,6 +2,8 @@ import os
 import re
 import psycopg2
 from dotenv import load_dotenv
+import bcrypt
+import binascii
 
 load_dotenv()
 
@@ -104,7 +106,7 @@ def update_wrapper(request, allowed_fields, id_to_update, update_function, logge
     for field in allowed_fields:
         if field in data:
             fields[field] = data[field]
-
+    
     query = "SET "
     num_fields = len(fields)
     for index, (key, value) in enumerate(fields.items()):
