@@ -101,8 +101,8 @@ def users():
 @app.route("/users/<int:id>", methods=["GET", "PUT", "DELETE"])
 def user(id):
     logged_in_user = session.get('logged_in_user')
-    if not logged_in_user:
-        return "Unauthorised", 401
+    if not logged_in_user or id != logged_in_user["id"]:
+        return render_template("not_authorised.html")
 
     if request.method == "GET":
         result = db_block(view_user, id, logged_in_user)
@@ -150,8 +150,8 @@ def user(id):
 @app.route("/users/profiles/<int:user_id>", methods=["GET", "PUT"]) # user_id, NOT profile id
 def profile(user_id):
     logged_in_user = session.get('logged_in_user')
-    if not logged_in_user:
-        return "Unauthorized", 401
+    if not logged_in_user or id != logged_in_user["id"]:
+        return render_template("not_authorised.html")
     
     if request.method == "GET": 
         profile = db_block(select_profile, user_id, logged_in_user)
@@ -166,6 +166,65 @@ def profile(user_id):
 
     elif request.method == "PUT":
         return update_wrapper(request, ["profile_pic", "bio"], user_id, update_profile, logged_in_user)
+
+# password reset
+@app.route('/users/<int:user_id>/password_reset', methods=["GET", "POST"])
+def password_reset(user_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return "Unauthorized", 401
+    
+    if request.method == "GET":
+        if user_id == logged_in_user["id"]:
+            return render_template ("password_reset.html", user=logged_in_user)
+        else:
+            return render_template("not_authorised.html")
+
+    if request.method == "POST":
+        data = request.get_json()
+        old_password = data.get('old_password')
+        new_password = data.get('confirm_password')
+
+        result, status_code = db_block(change_password, old_password, new_password, logged_in_user, user_id)
+
+        if status_code != 200:
+            return result, status_code
+        else:
+            return f'password changed!'
+
+"""
+
+def change_password(conn, cursor, old_password, new_password, logged_in_user):
+    users_password_hash = logged_in_user["password"]
+
+    hex_string = users_password_hash.replace("\\x", "")
+    binary_hash = binascii.unhexlify(hex_string)
+
+    # Hashing the user's provided password for comparison
+    user_guess_encoded_password = old_password.encode('utf-8')
+
+    if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
+        print("passwords match")
+
+        cursor.execute("SELECT * FROM users WHERE id = %s", (logged_in_user["id"],))
+    
+        if cursor.rowcount == 0:
+            return "internal error", 500
+        else:
+            user = results_to_dict(cursor, "ind")
+            
+            new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            print(new_hashed_password)
+            cursor.execute("UPDATE users SET password = %s WHERE id = %s", (new_hashed_password, user['id']))
+            # above, returns id of the new user, can be accessed by cursor.fetchone()[0]
+            conn.commit()
+            return user, 200
+
+    else:
+        return "passwords don't match", 400
+"""
+
+
 
 ## exercise routes (viewing exercises or posting new one)
 @app.route('/exercises', methods=["GET", "POST"])

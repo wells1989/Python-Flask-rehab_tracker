@@ -481,6 +481,41 @@ def logout(logged_in_user):
     return logged_in_user
 
 
+def change_password(conn, cursor, old_password, new_password, logged_in_user, id):
+    if admin_check(logged_in_user) or id == logged_in_user["id"]:
+
+        users_password_hash = logged_in_user["password"]
+
+        hex_string = users_password_hash.replace("\\x", "")
+        binary_hash = binascii.unhexlify(hex_string)
+
+        # Hashing the user's provided password for comparison
+        user_guess_encoded_password = old_password.encode('utf-8')
+
+        if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
+
+            cursor.execute("SELECT * FROM users WHERE id = %s", (logged_in_user["id"],))
+        
+            if cursor.rowcount == 0:
+                return "internal error", 500
+            else:
+                user = results_to_dict(cursor, "ind")
+                
+                new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                cursor.execute("UPDATE users SET password = %s WHERE id = %s", (new_hashed_password, user['id']))
+                # above, returns id of the new user, can be accessed by cursor.fetchone()[0]
+                conn.commit()
+                return user, 200
+            
+        else:
+            return "passwords don't match", 400
+       
+    else:
+        return "not authorised", 401
+
+    
+
+
 #logging in / out example
 # logged_in_user = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
 ## # vasile password no longer working due to hashing issue logged_in_user = db_block(log_in, "vasile@gmail.com", "vasile1989$")
@@ -492,5 +527,8 @@ def logout(logged_in_user):
 if __name__ == "__main__":
     # logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
 
-    
+    logged_in_user, _ = db_block(log_in, "pantufa@gmail.com", "pantufa123%")
+
     print(logged_in_user)
+
+
