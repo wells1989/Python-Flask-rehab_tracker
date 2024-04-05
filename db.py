@@ -88,7 +88,7 @@ def delete_user(conn, cursor, id, logged_in_user):
 
 ## userProfiles
 
-def select_profile(conn, cursor, user_id, logged_in_user):
+def view_profile(conn, cursor, user_id, logged_in_user):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM userprofiles WHERE user_id = %s", (user_id,))
@@ -99,7 +99,7 @@ def select_profile(conn, cursor, user_id, logged_in_user):
         return result, 200
     else:
         return "not authorised", 401
-# e.g. print(db_block(select_profile, 17, logged_in_user))
+# e.g. print(db_block(view_profile, 17, logged_in_user))
 
 def update_profile(conn, cursor, query, user_id, values, logged_in_user):
     if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
@@ -209,7 +209,7 @@ def create_program(conn, cursor, logged_in_user, start_date, end_date, rating, d
     created_program = cursor.fetchone() 
 
     if created_program:
-        return created_program, 201
+        return created_program, 200
     else:
         return "Failed to create program", 500
 # e.g. db_block(create_program, logged_in_user, "2000-10-20", "2000-12-20", 2, "summer_regime 2")
@@ -384,7 +384,7 @@ def view_users_past_exercises(conn, cursor, logged_in_user, user_id):
 # e.g. print(db_block(view_users_past_exercises, logged_in_user, 19))
 
 
-def view_programs_exercises(conn, cursor, logged_in_user, program_id, user_id):
+def view_programs_exercises(conn, cursor, logged_in_user, user_id, program_id):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
         cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s AND program_id = %s", (user_id, program_id))
@@ -525,10 +525,12 @@ def change_password(conn, cursor, old_password, new_password, logged_in_user, id
 
 
 if __name__ == "__main__":
-    # logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
+    logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
 
-    logged_in_user, _ = db_block(log_in, "pantufa@gmail.com", "pantufa123%")
+    # logged_in_user, _ = db_block(log_in, "pantufa@gmail.com", "pantufa123%")
 
     print(logged_in_user)
+
+    # DEV ONLY print(db_block(view_program, logged_in_user, 28, 10)) ## not working on postman, as getting need to log in first ...
 
 

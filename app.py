@@ -8,14 +8,22 @@ app = Flask(__name__)
 # DEV ONLY test route
 @app.route('/test', methods=["GET"])
 def test():
-    return render_template('test.html')
+    logged_in_user = session.get('logged_in_user')
+    return f' logged_in_user : {logged_in_user}'
 
 # homepage route
 @app.route('/', methods=["GET"])
 def homepage():
     logged_in_user = session.get('logged_in_user')
     if logged_in_user:
-        return render_template('homepage.html', logged_in_user = logged_in_user)
+
+        profile, profile_status_code = db_block(view_profile, logged_in_user['id'], logged_in_user)
+
+        programs, programs_status_code = db_block(view_all_user_programs, logged_in_user, logged_in_user['id'])
+        if programs_status_code != 200:
+            programs = []
+
+        return render_template('homepage.html', logged_in_user = logged_in_user, profile=profile, programs=programs)
     else:
         return render_template('login.html')
  
@@ -107,7 +115,7 @@ def user(id):
     if request.method == "GET":
         result = db_block(view_user, id, logged_in_user)
         if result:
-            profile = db_block(select_profile, id, logged_in_user)[0]
+            profile = db_block(view_profile, id, logged_in_user)[0]
             return render_template("profile_page.html", user=logged_in_user, profile=profile)
         else: 
             return redirect("/")
@@ -150,12 +158,14 @@ def user(id):
 @app.route("/users/profiles/<int:user_id>", methods=["GET", "PUT"]) # user_id, NOT profile id
 def profile(user_id):
     logged_in_user = session.get('logged_in_user')
-    if not logged_in_user or id != logged_in_user["id"]:
+    if not logged_in_user:
         return render_template("not_authorised.html")
     
     if request.method == "GET": 
-        profile = db_block(select_profile, user_id, logged_in_user)
+        profile, status_code = db_block(view_profile, user_id, logged_in_user)
         if profile:
+            if status_code == 401:
+                return render_template("not_authorised.html")
             # dev only, for postman queries
             if request.accept_mimetypes.accept_json:
                 return jsonify({"user": logged_in_user, "profile": profile}), 200
@@ -191,39 +201,6 @@ def password_reset(user_id):
             return result, status_code
         else:
             return f'password changed!'
-
-"""
-
-def change_password(conn, cursor, old_password, new_password, logged_in_user):
-    users_password_hash = logged_in_user["password"]
-
-    hex_string = users_password_hash.replace("\\x", "")
-    binary_hash = binascii.unhexlify(hex_string)
-
-    # Hashing the user's provided password for comparison
-    user_guess_encoded_password = old_password.encode('utf-8')
-
-    if bcrypt.checkpw(user_guess_encoded_password, binary_hash):
-        print("passwords match")
-
-        cursor.execute("SELECT * FROM users WHERE id = %s", (logged_in_user["id"],))
-    
-        if cursor.rowcount == 0:
-            return "internal error", 500
-        else:
-            user = results_to_dict(cursor, "ind")
-            
-            new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-            print(new_hashed_password)
-            cursor.execute("UPDATE users SET password = %s WHERE id = %s", (new_hashed_password, user['id']))
-            # above, returns id of the new user, can be accessed by cursor.fetchone()[0]
-            conn.commit()
-            return user, 200
-
-    else:
-        return "passwords don't match", 400
-"""
-
 
 
 ## exercise routes (viewing exercises or posting new one)
@@ -289,15 +266,23 @@ def programs_get_and_post(user_id):
                 return result
         
     elif request.method == "POST":
-        data = request.get_json()
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
-        rating = data.get('rating')
-        description = data.get('description')
 
-        result = db_block(create_program, logged_in_user, start_date, end_date, rating, description)
+        fields = ('start_date', 'end_date', 'description')
+        values = process_request(request, *fields)
 
-        return jsonify({'result': result})
+        start_date, end_date, description = values['start_date'], values["end_date"], values['description']
+        
+        if 'rating' in values:
+            rating = values['rating']
+        else:
+            rating = None 
+        
+        result, status_code = db_block(create_program, logged_in_user, start_date, end_date, rating, description)
+
+        if status_code != 200:
+            return result, status_code
+
+        return redirect("/", code=301)
 
 # individual program routes (getting, updating, deleting)
 @app.route('/programs/program/<int:user_id>/<int:program_id>', methods=["GET"])
@@ -306,9 +291,21 @@ def get_user_program(user_id, program_id):
     if not logged_in_user:
         return "need to log in first!", 401
 
-    result = db_block(view_program, logged_in_user, user_id, program_id)
-    if result:
-            return result
+    result, status_code = db_block(view_program, logged_in_user, user_id, program_id)
+    
+    user_agent = request.headers.get('User-Agent', '')
+    if 'Postman' in user_agent:
+        return result
+
+    if status_code == 401:
+        return render_template("not_authorised.html")
+    
+    elif status_code != 200:
+        return redirect("/", code=301)
+
+    else:
+        return render_template("program_page.html", program=result)
+
 
 @app.route('/programs/<int:program_id>', methods=["PUT", "DELETE"])
 def programs_update_and_delete(program_id):
@@ -320,11 +317,16 @@ def programs_update_and_delete(program_id):
         return update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
 
     elif request.method == "DELETE":
-        result = db_block(delete_program, program_id, logged_in_user)
-        if result:
-            return result
+        result, status_code = db_block(delete_program, program_id, logged_in_user)
+        
+        user_agent = request.headers.get('User-Agent', '')
+        if 'Postman' in user_agent:
+            return result, status_code
+
+        if status_code == 401:
+            return redirect("not_authorised.html")
         else:
-            return 404
+            return redirect("/", code=301)
         
 
 ## program_exercise routes (adding, updating or deleting an exercise from a program)
