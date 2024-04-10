@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, url_for
 from db import *
 from flask import session, render_template, redirect
 from utils.utils import process_request
@@ -272,8 +272,8 @@ def programs_get_and_post(user_id):
 
         start_date, end_date, description = values['start_date'], values["end_date"], values['description']
         
-        if 'rating' in values:
-            rating = values['rating']
+        if request.form.get('rating'):
+            rating = request.form.get('rating')
         else:
             rating = None 
         
@@ -286,46 +286,70 @@ def programs_get_and_post(user_id):
 
 # individual program routes (getting, updating, deleting)
 @app.route('/programs/program/<int:user_id>/<int:program_id>', methods=["GET"])
-def get_user_program(user_id, program_id):
+def user_program(user_id, program_id):
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
         return "need to log in first!", 401
+    try:
+        result, status_code = db_block(view_program, logged_in_user, user_id, program_id)
+        
+        user_agent = request.headers.get('User-Agent', '')
+        if 'Postman' in user_agent:
+            return result
 
-    result, status_code = db_block(view_program, logged_in_user, user_id, program_id)
-    
-    user_agent = request.headers.get('User-Agent', '')
-    if 'Postman' in user_agent:
-        return result
+        if status_code == 401:
+            return render_template("not_authorised.html")
+        
+        elif status_code != 200:
+            return redirect("/", code=301)
 
-    if status_code == 401:
-        return render_template("not_authorised.html")
-    
-    elif status_code != 200:
+        else:
+            return render_template("program_page.html", program=result)
+    except:
         return redirect("/", code=301)
-
-    else:
-        return render_template("program_page.html", program=result)
 
 
 @app.route('/programs/<int:program_id>', methods=["PUT", "DELETE"])
 def programs_update_and_delete(program_id):
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
-        return "need to log in first!", 401
+        return render_template("not_authorised.html")
     
+    user_id = logged_in_user['id']
     if request.method == "PUT":
-        return update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
+
+        try:
+            data = request.get_json()
+            if not all(field in data for field in ["start_date", "end_date", "rating", "description"]):
+                return redirect(f'/programs/{program_id}')
+            
+            # print(data) # {'start_date': '2024-04-12', 'end_date': '2024-04-19', 'rating': '1', 'user_id': '62', 'description': 'h there'}
+
+            result = update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
+
+            status_code = result[1]
+
+            if status_code not in [200, 201]:
+                return "Failed to update program", status_code
+            else:
+                return "success", status_code
+        except:
+            return redirect(url_for('user_program', user_id=user_id, program_id=program_id))
+
 
     elif request.method == "DELETE":
-        result, status_code = db_block(delete_program, program_id, logged_in_user)
-        
-        user_agent = request.headers.get('User-Agent', '')
-        if 'Postman' in user_agent:
-            return result, status_code
+        try:
+            result, status_code = db_block(delete_program, program_id, logged_in_user)
+            
+            user_agent = request.headers.get('User-Agent', '')
+            if 'Postman' in user_agent:
+                return result, status_code
 
-        if status_code == 401:
-            return redirect("not_authorised.html")
-        else:
+            if status_code == 401:
+                return redirect("not_authorised.html")
+            else:
+                return redirect("/", code=301)
+        except:
             return redirect("/", code=301)
         
 

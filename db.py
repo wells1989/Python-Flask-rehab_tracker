@@ -245,9 +245,9 @@ def view_program(conn, cursor, logged_in_user, user_id, program_id):
     #  print(db_block(view_program, logged_in_user, 28, 10))
 
 
-def update_program(conn, cursor, query, program_id, logged_in_user):
+def update_program(conn, cursor, query, program_id, values, logged_in_user):
 
-    cursor.execute("SELECT * FROM exercises WHERE id = %s", (program_id,))
+    cursor.execute("SELECT * FROM programs WHERE id = %s", (program_id,))
     program = cursor.fetchone()
 
     if not program:
@@ -256,7 +256,7 @@ def update_program(conn, cursor, query, program_id, logged_in_user):
         user_id = program[1]
 
     if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
-        cursor.execute("UPDATE programs " + query + " WHERE id = %s", (program_id,)) # restricted exercises that user created
+        cursor.execute("UPDATE programs " + query + " WHERE id = %s", values + [program_id]) # restricted exercises that user created
         conn.commit()
         if cursor.rowcount > 0:
             return "Update successful", 201
@@ -264,7 +264,9 @@ def update_program(conn, cursor, query, program_id, logged_in_user):
             return "No instance found", 404
     else:
         return "not authorised", 401
-# e.g. db_block(update_program, "SET description = 'brand new description'", 8, logged_in_user)
+    
+
+# e.g. db_block(update_program, "SET description = 'brand new description'", 8, ...., logged_in_user)
 
 
 def delete_program(conn, cursor, program_id, logged_in_user):

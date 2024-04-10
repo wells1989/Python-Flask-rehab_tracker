@@ -3,6 +3,26 @@
 {% block title %}Program Page{% endblock %}
 
 {% block content %}
+
+<div class = "block justify-center flex-wrap">
+    <!-- Program Update Form -->
+    <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md w-1/2">
+        <h2 class="text-center text-2xl font-bold mb-4">Program Information</h2>
+        <form id="programForm" action="/programs/{{ program.id }}" method="put">
+            <input type="date" name="start_date" placeholder="Start date" required class="w-full px-4 py-2 mb-4 border rounded-md" value="{{ program.start_date }}">
+            <input type="date" name="end_date" placeholder="End date" required class="w-full px-4 py-2 mb-4 border rounded-md" value="{{ program.end_date }}">
+            
+            <input type="hidden" name="user_id" value="{{ program.user_id }}" id = "user_id">
+            <input type="number" name="rating" placeholder="Rating" required min="1" max="3" class="w-full px-4 py-2 mb-4 border rounded-md" value="{{ program.rating }}">
+            <input type="text" name="description" placeholder="Description" required class="w-full px-4 py-2 mb-4 border rounded-md" value="{{ program.description }}">
+
+            <input type="submit" id="editProgram" value="Submit Changes" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md cursor-pointer">
+            
+            <button id="resetProgram" class="w-full bg-yellow-500 text-white py-2 px-4 rounded-md cursor-pointer mt-2">Reset Changes</button>
+        </form>
+    </div>
+
+
 <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
     <h2>{{ program.start_date }} </h2>
     <h2>{{ program.end_date }} </h2>
@@ -10,4 +30,56 @@
     <h2>{{ program.description }} </h2>
 
 </div>
+
+</div>
+
+<script>
+    document.getElementById('editProgram').addEventListener('click', function(event) {
+        event.preventDefault();
+        alert("clicked!")
+        
+        var form = document.getElementById('programForm');
+        var startDate = form.querySelector('input[name="start_date"]').value;
+        var endDate = form.querySelector('input[name="end_date"]').value;
+        var rating = form.querySelector('input[name="rating"]').value;
+        var description = form.querySelector('input[name="description"]').value;
+
+        var url = '/programs/{{ program.id }}';
+
+        var data = {
+        start_date: startDate,
+        end_date: endDate,
+        rating: rating,
+        description: description
+        };
+
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+
+        .then(response => {
+            if (response.ok) {
+                alert("program updated!")
+                window.location.reload()
+            } else {
+                console.error('Error:', response.statusText);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+    });
+
+    //resetting program form
+    document.getElementById('resetProgram').addEventListener('click', function(event) {
+    event.preventDefault();
+    alert("form reset")
+    document.getElementById('programForm').reset();
+    });
+</script>
 {% endblock %}
