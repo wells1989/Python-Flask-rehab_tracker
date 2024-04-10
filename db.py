@@ -118,7 +118,7 @@ def update_profile(conn, cursor, query, user_id, values, logged_in_user):
 ## Exercises
 # selecting all exercises
 def view_all_exercises(conn, cursor):
-    cursor.execute("SELECT * FROM exercises")
+    cursor.execute("SELECT * FROM exercises ORDER BY name, id")
 
     if cursor.rowcount == 0:
         return "No instance found", 404
@@ -394,7 +394,7 @@ def view_programs_exercises(conn, cursor, logged_in_user, user_id, program_id):
             return "No instance found", 404
 
         result = results_to_dict(cursor, "list")
-        return result
+        return result, 200
     else:
         return "not authorised", 401
 # e.g. print(db_block(view_programs_exercises, logged_in_user, 2, 28))

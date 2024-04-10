@@ -23,20 +23,105 @@
     </div>
 
 
-<div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
-    <h2>{{ program.start_date }} </h2>
-    <h2>{{ program.end_date }} </h2>
-    <h2>{{ program.rating }} </h2>
-    <h2>{{ program.description }} </h2>
+    <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-xxxl">
+        <h2 class="text-center text-2xl font-bold mb-4">Program Exercises</h2>
+        <table class="table-auto w-full">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2">Program ID</th>
+                    <th class="px-4 py-2">User ID</th>
+                    <th class="px-4 py-2">Exercise ID</th>
+                    <th class="px-4 py-2">Notes</th>
+                    <th class="px-4 py-2">Sets</th>
+                    <th class="px-4 py-2">Reps</th>
+                    <th class="px-4 py-2">Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for program_exercise in program_exercises %}
+                <tr>
+                    <td class="border px-4 py-2">{{ program_exercise.program_id }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.user_id }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.exercise_id }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.notes }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.sets }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.reps }}</td>
+                    <td class="border px-4 py-2">{{ program_exercise.rating }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-</div>
+    <!-- exercises section-->
+    <div class="container mx-auto p-5 m-5 flex flex-row flex-wrap">
+        <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
+            <h2>Exercises</h2>
+            <select class="w-full px-4 py-2 mb-4 border rounded-md" id="exerciseSelect">
+                {% for exercise in exercises %}
+                <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+    
+        <!-- Add New exercise section -->
+        <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
+            <h2>New Exercise?</h2>
+            <div id="createExerciseForm">
+                <form id="exerciseForm" action="/exercises" method="post">
+                    <input type="text"  name="name" placeholder="Name" required class="w-full px-4 py-2 mb-4 border rounded-md">
+                    <input type="text" name="image" placeholder="Image" class="w-full px-4 py-2 mb-4 border rounded-md">
+            </div>
+            <button id="addExerciseButton" type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md cursor-pointer mt-2">Add Exercise</button>
+        </div>
+
+    </div>
+    
+
 
 </div>
 
 <script>
+
+    document.getElementById("addExerciseButton").addEventListener('click', function(event) {
+        event.preventDefault();
+        
+        
+        var exerciseForm = document.getElementById('exerciseForm');
+        var name = exerciseForm.querySelector('input[name="name"]').value;
+        var image = exerciseForm.querySelector('input[name="image"]').value;
+
+        var url = "/exercises"
+
+        var data = {
+            name: name,
+            image: image
+        };
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+
+        .then(response => {
+            if (response.ok) {
+                alert("exercise added!")
+                window.location.reload()
+            } else {
+                console.error('Error:', response.statusText);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    })
+
     document.getElementById('editProgram').addEventListener('click', function(event) {
         event.preventDefault();
-        alert("clicked!")
         
         var form = document.getElementById('programForm');
         var startDate = form.querySelector('input[name="start_date"]').value;

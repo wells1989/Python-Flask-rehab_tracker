@@ -215,13 +215,18 @@ def exercises():
         if result:
                 return result
     elif request.method == "POST":
-        data = request.get_json()
-        name = data.get('name')
-        image = data.get('image')
-        
-        result = db_block(create_exercise, logged_in_user, name, image)
 
-        return jsonify({'result': result})
+        try:
+            fields = ("name", "image")
+            values = process_request(request, *fields)
+
+            name, image = values['name'], values["image"]
+        
+            result = db_block(create_exercise, logged_in_user, name, image)
+
+            return jsonify({'result': result})
+        except:
+            return "error occurred", 400
     
 
 # individual exercise routes (selecting, updating or deleting)
@@ -289,22 +294,25 @@ def programs_get_and_post(user_id):
 def user_program(user_id, program_id):
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
-        return "need to log in first!", 401
+        return render_template("not_authorised.html")
+    
     try:
-        result, status_code = db_block(view_program, logged_in_user, user_id, program_id)
-        
-        user_agent = request.headers.get('User-Agent', '')
-        if 'Postman' in user_agent:
-            return result
-
-        if status_code == 401:
-            return render_template("not_authorised.html")
-        
-        elif status_code != 200:
+        program, p_status_code = db_block(view_program, logged_in_user, user_id, program_id)
+        if p_status_code != 200:
             return redirect("/", code=301)
 
+        program_exercises, pe_status_code  = db_block(view_programs_exercises, logged_in_user, user_id, program_id)
+        if pe_status_code == 401:
+            return render_template("not_authorised.html")
+
+        exercises, e_status_code = db_block(view_all_exercises)
+
+        user_agent = request.headers.get('User-Agent', '')
+        if 'Postman' in user_agent:
+            return program, program_exercises
+
         else:
-            return render_template("program_page.html", program=result)
+            return render_template("program_page.html", program=program, program_exercises=program_exercises, exercises=exercises)
     except:
         return redirect("/", code=301)
 
