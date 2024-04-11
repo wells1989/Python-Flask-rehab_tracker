@@ -250,13 +250,15 @@ def view_users_exercises(creator_id):
 # individual exercise routes (selecting, updating or deleting)
 @app.route('/exercises/<int:id>', methods=["GET", "PUT", "DELETE"])
 def exercise(id):
+    # DEV ONLY not being used yet 11/4 GET or PUT ??
     if request.method == "GET":
         result = db_block(view_exercise, id)
         if result:
                 return result
         else:
             return 404
-    
+        
+    # DEV ONLY not being used yet 11/4 GET or PUT ??
     if request.method == "PUT":
         logged_in_user = session.get('logged_in_user')
         if not logged_in_user:
@@ -264,17 +266,21 @@ def exercise(id):
         
         return update_wrapper(request, ["name", "image"], id, update_exercise, logged_in_user)
 
+
     if request.method == "DELETE":
-        logged_in_user = session.get('logged_in_user')
-        if not logged_in_user:
-            return "Unauthorized", 401
-        
-        result = db_block(delete_exercise, id, logged_in_user)
-        if result:
-            return result
-        else:
-            return 404
-        
+        try:
+            logged_in_user = session.get('logged_in_user')
+            if not logged_in_user:
+                return "Unauthorized", 401
+            
+            result, status_code = db_block(delete_exercise, id, logged_in_user)
+            if status_code == 200:
+                return result
+            else:
+                return result, status_code
+        except:
+            return 'error occurred'
+ 
 
 # User program routes
 @app.route('/programs/<int:user_id>', methods=["GET", "POST"])

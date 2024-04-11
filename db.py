@@ -128,7 +128,7 @@ def view_all_exercises(conn, cursor):
 # e.g. print(db_block(view_all_exercises))
 
 def view_users_exercises(conn, cursor, logged_in_user):
-    cursor.execute("SELECT * FROM exercises WHERE creator_id = %s ORDER BY name, id", (logged_in_user["id"],))
+    cursor.execute("SELECT * FROM exercises WHERE creator_id = %s ORDER BY id DESC", (logged_in_user["id"],))
 
     if cursor.rowcount == 0:
         return "No instance found", 404

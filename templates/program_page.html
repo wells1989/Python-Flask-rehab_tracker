@@ -65,6 +65,7 @@
                     <form id="exerciseForm" action="/exercises" method="post">
                         <input type="text"  name="name" placeholder="Name" required class="w-full px-4 py-2 mb-4 border rounded-md">
                         <input type="text" name="image" placeholder="Image" class="w-full px-4 py-2 mb-4 border rounded-md">
+                    </form>
                 </div>
                 <button id="addExerciseButton" type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md cursor-pointer mt-2">Add Exercise</button>
             </div>
@@ -75,7 +76,7 @@
                 <div class="flex items-center mb-4">
                     <p class="flex-grow">{{ exercise.name }}</p>
                     <img src="{{ exercise.image }}" alt="{{ exercise.name }}" class="w-16 h-16 object-cover rounded-full mr-4">
-                    <button class="bg-red-500 text-white px-3 py-1 rounded-md">Delete</button>
+                    <button class="delete_button bg-red-500 text-white px-3 py-1 rounded-md" data-exercise-id="{{ exercise.id }}">Delete</button>
                 </div>
                 {% endfor %}
             </div>
@@ -96,16 +97,37 @@
             </div>
         </div>
     </div>
-
-
-
-        
-
-    
 </div>
 
 <script>
+    // deleting a created exercise
+    document.querySelectorAll('.delete_button').forEach(button => {
+        button.addEventListener('click', function() {
+            var exerciseId = this.getAttribute('data-exercise-id')
+            deleteExercise(exerciseId)
+        })
+    })
 
+    function deleteExercise(exerciseId) {
+        alert(`exercise with id of ${exerciseId} to be deleted`)
+        fetch(`/exercises/${exerciseId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then((response) => {
+            if (response.ok) {
+                window.location.reload()
+            }
+        })
+        .catch((error) => {
+            console.log(error)
+        })
+    }
+
+
+    // Creating new exercise
     document.getElementById("addExerciseButton").addEventListener('click', function(event) {
         event.preventDefault();
         

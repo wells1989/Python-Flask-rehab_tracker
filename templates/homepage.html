@@ -89,7 +89,6 @@
     });
 
     function deleteProgram(programId) {
-        alert(`program id ${programId} to be deleted`)
         fetch(`/programs/${programId}`, {
             method: 'DELETE',
             headers: {
