@@ -387,16 +387,63 @@ def programs_update_and_delete(program_id):
                 return redirect("/", code=301)
         except:
             return redirect("/", code=301)
-        
 
+
+# DEV ONLY TEST
+@app.route('/details', methods=["POST"])
+def details():
+
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return render_template("not_authorised.html")
+
+    if request.method == "POST":
+        
+        try: 
+            form_data = request.form.to_dict()
+            exercise_id = form_data.get('exercise_id')
+
+            exercise_info, status_code = db_block(view_exercise, exercise_id)
+            if status_code != 200:
+                return exercise_info, status_code
+        
+            exercise_name = exercise_info['name']
+            user_id = logged_in_user['id']
+            program_id = form_data.get('program_id')
+
+            notes = form_data.get('notes')
+            sets = form_data.get('sets')
+            reps = form_data.get('reps')
+            rating = int(form_data.get('rating')) if form_data.get('rating') is not '' else None
+            result, status_code = db_block(add_exercise_to_program, program_id, exercise_id, notes, sets, reps, rating, logged_in_user)
+
+            # DEV ONLY
+            user_agent = request.headers.get('User-Agent', '')
+            if 'Postman' in user_agent:
+                return jsonify({'result': result})
+
+            return redirect(f'/programs/program/{user_id}/{program_id}')
+
+        except:
+            return redirect(f'/programs/program/{user_id}/{program_id}')
+
+
+# DEV ONLY, REPLACE /programs/details route, interfering with programs GET
 ## program_exercise routes (adding, updating or deleting an exercise from a program)
 @app.route('/programs/details/<int:program_id>/<int:exercise_id>', methods=["POST", "PUT", "DELETE"])
 def prog_exercises(program_id, exercise_id):
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
-        return "need to log in first!", 401
+        return render_template("not_authorised.html")
 
     if request.method == "POST":
+        
+        form_data = request.form.to_dict()
+    
+        # Print form data
+        print("Form Data:", form_data)
+        return
+
         data = request.get_json()
         notes = data.get('notes')
         sets = data.get('sets')
