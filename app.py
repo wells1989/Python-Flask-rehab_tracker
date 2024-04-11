@@ -402,12 +402,7 @@ def details():
         try: 
             form_data = request.form.to_dict()
             exercise_id = form_data.get('exercise_id')
-
-            exercise_info, status_code = db_block(view_exercise, exercise_id)
-            if status_code != 200:
-                return exercise_info, status_code
         
-            exercise_name = exercise_info['name']
             user_id = logged_in_user['id']
             program_id = form_data.get('program_id')
 
