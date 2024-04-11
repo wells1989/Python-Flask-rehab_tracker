@@ -389,7 +389,7 @@ def programs_update_and_delete(program_id):
             return redirect("/", code=301)
 
 
-# DEV ONLY TEST
+# adding exercises to a program
 @app.route('/details', methods=["POST"])
 def details():
 
@@ -424,6 +424,27 @@ def details():
 
             return redirect(f'/programs/program/{user_id}/{program_id}')
 
+        except:
+            return redirect(f'/programs/program/{user_id}/{program_id}')
+
+# removing / updating exercises in a program
+
+@app.route('/details/<int:exercise_id>/<int:program_id>', methods=["PUT", "DELETE"])
+def update_or_remove_program_exercise(exercise_id, program_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return render_template("not_authorised.html")
+    else:
+        user_id = logged_in_user['id']
+    
+    if request.method == "PUT":
+        pass
+
+    if request.method == "DELETE":
+        try:
+            result, status_code = db_block(delete_exercise_from_program, program_id, exercise_id, logged_in_user)
+
+            return result, status_code
         except:
             return redirect(f'/programs/program/{user_id}/{program_id}')
 
@@ -484,6 +505,7 @@ def prog_exercises(program_id, exercise_id):
             return result
         else: return 404
         
+
 
 # getting exercises and details in a program (ie. sets and reps etc)
 @app.route("/programs/details/<int:user_id>/<int:program_id>", methods=["GET"])

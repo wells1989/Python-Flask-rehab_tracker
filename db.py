@@ -399,7 +399,8 @@ def view_users_past_exercises(conn, cursor, logged_in_user, user_id):
 def view_programs_exercises(conn, cursor, logged_in_user, user_id, program_id):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
-        cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s AND program_id = %s", (user_id, program_id))
+        cursor.execute("SELECT e.id AS exercise_id, e.image, e.name, pe.notes, pe.sets, pe.reps, pe.rating FROM programs_exercises pe JOIN exercises e ON pe.exercise_id = e.id WHERE user_id = %s AND program_id = %s", (user_id, program_id))
+
         if cursor.rowcount == 0:
             return "No instance found", 404
 
