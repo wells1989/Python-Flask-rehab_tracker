@@ -126,6 +126,16 @@ def view_all_exercises(conn, cursor):
         result = results_to_dict(cursor, "list")
         return result, 200
 # e.g. print(db_block(view_all_exercises))
+
+def view_users_exercises(conn, cursor, logged_in_user):
+    cursor.execute("SELECT * FROM exercises WHERE creator_id = %s ORDER BY name, id", (logged_in_user["id"],))
+
+    if cursor.rowcount == 0:
+        return "No instance found", 404
+    else:
+        result = results_to_dict(cursor, "list")
+        return result, 200
+
     
 def view_exercise(conn, cursor, id):
 

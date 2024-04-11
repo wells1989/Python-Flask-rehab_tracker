@@ -25,6 +25,7 @@
 
     <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-xxxl">
         <h2 class="text-center text-2xl font-bold mb-4">Program Exercises</h2>
+        {% if program_exercises != 'No instance found' %}
         <table class="table-auto w-full">
             <thead>
                 <tr>
@@ -51,35 +52,56 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
     </div>
 
-    <!-- exercises section-->
-    <div class="container mx-auto p-5 m-5 flex flex-row flex-wrap">
-        <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
-            <h2>Exercises</h2>
-            <select class="w-full px-4 py-2 mb-4 border rounded-md" id="exerciseSelect">
-                {% for exercise in exercises %}
-                <option value="{{ exercise.id }}">{{ exercise.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-    
-        <!-- Add New exercise section -->
-        <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
-            <h2>New Exercise?</h2>
-            <div id="createExerciseForm">
-                <form id="exerciseForm" action="/exercises" method="post">
-                    <input type="text"  name="name" placeholder="Name" required class="w-full px-4 py-2 mb-4 border rounded-md">
-                    <input type="text" name="image" placeholder="Image" class="w-full px-4 py-2 mb-4 border rounded-md">
+
+    <div class="container mx-auto flex flex-wrap mt-20 bg-white p-8 rounded-md shadow-md max-w-xxxl">
+        <!-- Add New exercise / view your exercises section -->
+        <div class="w-full sm:w-1/2">
+            <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
+                <h2>New Exercise?</h2>
+                <div id="createExerciseForm">
+                    <form id="exerciseForm" action="/exercises" method="post">
+                        <input type="text"  name="name" placeholder="Name" required class="w-full px-4 py-2 mb-4 border rounded-md">
+                        <input type="text" name="image" placeholder="Image" class="w-full px-4 py-2 mb-4 border rounded-md">
+                </div>
+                <button id="addExerciseButton" type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md cursor-pointer mt-2">Add Exercise</button>
             </div>
-            <button id="addExerciseButton" type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md cursor-pointer mt-2">Add Exercise</button>
+        
+            <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
+                <h2 class="text-center text-2xl font-bold p-5 m-5">my exercises</h2>
+                {% for exercise in users_exercises %}
+                <div class="flex items-center mb-4">
+                    <p class="flex-grow">{{ exercise.name }}</p>
+                    <img src="{{ exercise.image }}" alt="{{ exercise.name }}" class="w-16 h-16 object-cover rounded-full mr-4">
+                    <button class="bg-red-500 text-white px-3 py-1 rounded-md">Delete</button>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
+        <!-- adding exercise to program -->
+        <div class="w-full sm:w-1/2">
+            <h2 class="text-center text-2xl font-bold p-5 m-10">Exercises</h2>
+            <div class="container mx-auto p-5 m-5 flex flex-row flex-wrap">
+                <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-md">
+                    <h2>Exercises</h2>
+                    <select class="w-full px-4 py-2 mb-4 border rounded-md" id="exerciseSelect">
+                        {% for exercise in exercises %}
+                        <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
     </div>
+
+
+
+        
+
     
-
-
 </div>
 
 <script>

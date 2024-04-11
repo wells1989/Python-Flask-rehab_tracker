@@ -228,6 +228,24 @@ def exercises():
         except:
             return "error occurred", 400
     
+"""
+# viewing a users exercises (to allow deletion or editing ...)
+@app.route('/exercises/user/<int:creator_id>', methods=["GET"])
+def view_users_exercises(creator_id):
+    logged_in_user = session.get('logged_in_user')
+    if not logged_in_user:
+        return render_template("not_authorised.html")
+    
+    try:
+        users_exercises, status_code = db_block(view_users_exercises, logged_in_user)
+
+        if status_code != 200:
+            return 'issue getting exercises', status_code
+        else:
+            return jsonify(f'result: {users_exercises}')
+    except:
+        return "error", 400
+"""
 
 # individual exercise routes (selecting, updating or deleting)
 @app.route('/exercises/<int:id>', methods=["GET", "PUT", "DELETE"])
@@ -307,12 +325,16 @@ def user_program(user_id, program_id):
 
         exercises, e_status_code = db_block(view_all_exercises)
 
+        users_exercises, ue_status_code = db_block(view_users_exercises, logged_in_user)
+        if ue_status_code == 401:
+            return render_template("not_authorised.html")
+
         user_agent = request.headers.get('User-Agent', '')
         if 'Postman' in user_agent:
             return program, program_exercises
 
         else:
-            return render_template("program_page.html", program=program, program_exercises=program_exercises, exercises=exercises)
+            return render_template("program_page.html", program=program, program_exercises=program_exercises, exercises=exercises, users_exercises=users_exercises)
     except:
         return redirect("/", code=301)
 
