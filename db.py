@@ -1,7 +1,7 @@
 import bcrypt
 import binascii
 import psycopg2
-from utils.utils import database_connect, database_close, validate_email, validate_password, admin_check, results_to_dict, db_block, update_wrapper
+from utils.utils import database_connect, database_close, validate_email, validate_password, admin_check, results_to_dict, db_block, update_wrapper, process_request
 
 logged_in_user = None 
 

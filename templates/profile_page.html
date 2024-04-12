@@ -96,7 +96,7 @@
         .then(response => {
             if (response.ok) {
                 alert("user deleted!")
-                window.location.href = "/deleted"
+                window.location.href = "/users/deleted"
             } else {
                 console.error('Error:', response.statusText);
             }
@@ -133,9 +133,8 @@
 
 
         .then(response => {
-            if (response.ok) {
+            if (response) {
                 alert("profile updated!")
-                // window.location.href = "/users/{{ user.id }}"
                 window.location.reload()
             } else {
                 console.error('Error:', response.statusText);
@@ -149,13 +148,11 @@
     // resetting User / Profile Forms
     document.getElementById('resetUser').addEventListener('click', function(event) {
         event.preventDefault();
-        alert("form reset")
         document.getElementById('userForm').reset();
     });
 
     document.getElementById('resetForm').addEventListener('click', function(event) {
         event.preventDefault();
-        alert("form reset")
         document.getElementById('profileForm').reset();
     });
 </script>
