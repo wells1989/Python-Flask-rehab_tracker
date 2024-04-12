@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, url_for
 from db import *
 from flask import session, render_template, redirect
 from utils.utils import process_request
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -313,6 +314,7 @@ def programs_get_and_post(user_id):
 
         return redirect("/", code=301)
 
+
 # individual program routes (getting, updating, deleting)
 @app.route('/programs/program/<int:user_id>/<int:program_id>', methods=["GET"])
 def user_program(user_id, program_id):
@@ -409,8 +411,9 @@ def details():
             notes = form_data.get('notes')
             sets = form_data.get('sets')
             reps = form_data.get('reps')
+            date_modified = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
             rating = int(form_data.get('rating')) if form_data.get('rating') != '' else None
-            result, status_code = db_block(add_exercise_to_program, program_id, exercise_id, notes, sets, reps, rating, logged_in_user)
+            result, status_code = db_block(add_exercise_to_program, program_id, exercise_id, notes, sets, reps, rating, date_modified, logged_in_user)
 
             # DEV ONLY
             user_agent = request.headers.get('User-Agent', '')
@@ -434,10 +437,13 @@ def update_or_remove_program_exercise(exercise_id, program_id):
     
     if request.method == "PUT":
         
-        try:
+        # try:
             fields = ("notes", "sets", "reps", "rating")
             data = process_request(request, *fields)
 
+            data['lastmod'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+
+            print(f'values: {data}')
             # DEV ONLY
             """
             print(f'values: {data}')
@@ -462,8 +468,8 @@ def update_or_remove_program_exercise(exercise_id, program_id):
             result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query)
 
             return result, status_code
-        except:
-            return redirect(f'/programs/program/{user_id}/{program_id}')
+        #except:
+            #return redirect(f'/programs/program/{user_id}/{program_id}')
             
 
     if request.method == "DELETE":

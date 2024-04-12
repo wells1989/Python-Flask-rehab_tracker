@@ -302,7 +302,7 @@ def delete_program(conn, cursor, program_id, logged_in_user):
 
 
 ## program_exercises
-def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, reps, rating, logged_in_user):
+def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, reps, rating, date_modified, logged_in_user):
 
     cursor.execute("SELECT * FROM programs WHERE id = %s", (program_id,))
     program = cursor.fetchone() 
@@ -317,7 +317,7 @@ def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, 
     if program[1] == logged_in_user["id"] or admin_check(logged_in_user):
         exercise_name = exercise[1]
         user_id = logged_in_user["id"]
-        cursor.execute("INSERT into programs_exercises (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating", (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating))
+        cursor.execute("INSERT into programs_exercises (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating, lastmod) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating, lastmod", (program_id, exercise_id, user_id, exercise_name, notes, sets, reps, rating, date_modified))
 
         conn.commit()
 
@@ -399,7 +399,7 @@ def view_users_past_exercises(conn, cursor, logged_in_user, user_id):
 def view_programs_exercises(conn, cursor, logged_in_user, user_id, program_id):
 
     if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
-        cursor.execute("SELECT e.id AS exercise_id, e.image, e.name, pe.notes, pe.sets, pe.reps, pe.rating FROM programs_exercises pe JOIN exercises e ON pe.exercise_id = e.id WHERE user_id = %s AND program_id = %s", (user_id, program_id))
+        cursor.execute("SELECT e.id AS exercise_id, e.image, e.name, pe.notes, pe.sets, pe.reps, pe.rating FROM programs_exercises pe JOIN exercises e ON pe.exercise_id = e.id WHERE user_id = %s AND program_id = %s ORDER BY lastmod DESC", (user_id, program_id))
 
         if cursor.rowcount == 0:
             return "No instance found", 404
