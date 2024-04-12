@@ -42,31 +42,28 @@
                 <tr class="table_row">
                     <td class="border px-4 py-2 text-center">{{ program_exercise.exercise_id }}</td>
                     <td class="border px-4 py-2 flex justify-center align-center">
-                        <img src="{{ program_exercise.image }}" alt="{{ program_exercise.name }}" class="w-40 h-40 object-cover rounded-full mr-4">
+                        <img src="{{ program_exercise.image }}" 
+                        class="w-40 h-40 object-cover rounded-full mr-4">
                     </td>
                     <td class="border px-4 py-2 text-center">{{ program_exercise.name }}</td>
 
-                    <td class="border px-4 py-2 text-center">
+                    <td class="border px-4 py-2 text-center w-1/4">
                         <div class="form-field">
-                            <label for="notes">Notes:</label>
-                            <input type="textarea" name="notes" value="{{ program_exercise.notes }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
+                            <textarea name="notes" class="bg-blue-100 shadow-sm rounded-md p-2 w-full h-full">{{ program_exercise.notes }}</textarea>
                         </div>
                     </td>
                     <td class="border px-4 py-2 text-center">
                         <div class="form-field">
-                            <label for="sets">Sets:</label>
                             <input type="number" name="sets" value="{{ program_exercise.sets }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
                         </div>
                     </td>
                     <td class="border px-4 py-2 text-center">
                         <div class="form-field">
-                            <label for="reps">Reps:</label>
                             <input type="number" name="reps" value="{{ program_exercise.reps }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
                         </div>
                     </td>
                     <td class="border px-4 py-2 text-center">
                         <div class="form-field">
-                            <label for="rating">Rating:</label>
                             <input type="number" name="rating" min="1" max="3" value="{{ program_exercise.rating }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
                         </div>
                     </td>
@@ -179,7 +176,7 @@
         button.addEventListener('click', function() {
             var tableRow = this.closest('tr');
 
-            var notes = tableRow.querySelector('input[name="notes"]').value;
+            var notes = tableRow.querySelector('textarea[name="notes"]').value;
             var sets = tableRow.querySelector('input[name="sets"]').value;
             var reps = tableRow.querySelector('input[name="reps"]').value;
             var rating = tableRow.querySelector('input[name="rating"]').value;
