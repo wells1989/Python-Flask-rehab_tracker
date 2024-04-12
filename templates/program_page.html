@@ -69,9 +69,15 @@
                     </td>
                     <td class="border px-4 py-2 text-center">
                         <div class="form-field">
-                            <button class="edit_button border px-4 py-2 bg-yellow-500 text-white px-3 py-1 rounded-md" 
-                            data-exercise-id="{{ program_exercise.exercise_id }}" data-program-id="{{ program.id }}" data-notes="{{ program_exercise.notes}}"
-                            data-sets="{{ program_exercise.sets }}" data-reps="{{ program_exercise.reps }}" rating="{{ program_exercise.rating }}">Edit</button>
+                            <button class="edit_button border px-4 py-2 bg-yellow-500 text-white px-3 py-1 rounded-md">Edit</button>
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <button class="reset_button border px-4 py-2 bg-blue-500 text-white px-3 py-1 rounded-md"
+                            data-notes="{{ program_exercise.notes}}" data-sets="{{ program_exercise.sets }}" 
+                            data-reps="{{ program_exercise.reps }}" data-rating="{{ program_exercise.rating }}"
+                            >Reset</button>
                         </div>
                     </td>
                     <td class="border px-4 py-2 text-center">
@@ -79,7 +85,6 @@
                             <button class="remove_button border px-4 py-2 bg-red-500 text-white px-3 py-1 rounded-md" data-program-exercise-id="{{ program_exercise.exercise_id }}">Remove</button>
                         </div>
                     </td>
-                    
                 </tr>
                 {% endfor %}
             </tbody>
@@ -151,26 +156,29 @@
 </div>
 
 <script>
-    /*
-    // program_exercise updating ... resetting (capture on page load, on reset button click setting to initial values?)
-    document.querySelectorAll('.edit_button').forEach(button => {
-    button.addEventListener('click', function() {
-        // initial values
-        var exerciseId = this.getAttribute('data-exercise-id')
-        var programId = this.getAttribute('data-program-id')
-        var notes = this.getAttribute('data-notes')
-        var sets = this.getAttribute('data-sets')
-        var reps = this.getAttribute('data-reps')
-        var rating = this.getAttribute('data-rating')
+    //reset_button
 
-        var message = `Exercise ID: ${exerciseId}\nProgram ID: ${programId}\nNotes: ${notes}\nSets: ${sets}\nReps: ${reps}\nRating: ${rating}`;
-        alert(message);
+    document.querySelectorAll('.reset_button').forEach(button => {
+        button.addEventListener('click', function() {
+            initialValues = {
+                'notes': this.getAttribute('data-notes'),
+                'sets': this.getAttribute('data-sets'),
+                'reps': this.getAttribute('data-reps'),
+                'rating': this.getAttribute('data-rating'),
+            }
 
-    });
-});
-*/
+            var tableRow = this.closest('tr');
+            
+            tableRow.querySelector('textarea[name="notes"]').value = initialValues['notes'];
+            tableRow.querySelector('input[name="sets"]').value = initialValues['sets'];
+            tableRow.querySelector('input[name="reps"]').value = initialValues['reps'];
+            tableRow.querySelector('input[name="rating"]').value = initialValues['rating'];
+        })
+    })
 
-    // Changing program_exercises 
+
+
+    // Changing program_exercises / edit_button
     document.querySelectorAll('.edit_button').forEach(button => {
         // NOTE: arrow functions do not have this context, hence using normal function below
         button.addEventListener('click', function() {
@@ -183,10 +191,6 @@
             
             var exerciseId = this.getAttribute('data-exercise-id')
             var programId = this.getAttribute('data-program-id')
-            
-            var message = `Exercise ID: ${exerciseId}\nProgram ID: ${programId}\nNotes: ${notes}\nSets: ${sets}\nReps: ${reps}\nRating: ${rating}`;
-            
-            alert(message);
 
             url = `/details/${exerciseId}/${programId}`
 
@@ -218,13 +222,6 @@
     })
 
         
-
-
-
-
-
-
-
     // deleting a created exercise
     document.querySelectorAll('.delete_button').forEach(button => {
         button.addEventListener('click', function() {
