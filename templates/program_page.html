@@ -69,7 +69,7 @@
                     </td>
                     <td class="border px-4 py-2 text-center">
                         <div class="form-field">
-                            <button class="edit_button border px-4 py-2 bg-yellow-500 text-white px-3 py-1 rounded-md">Edit</button>
+                            <button class="edit_button border px-4 py-2 bg-yellow-500 text-white px-3 py-1 rounded-md" data-exercise-id="{{ program_exercise.exercise_id }}" data-program-id="{{ program.id }}">Edit</button>
                         </div>
                     </td>
                     <td class="border px-4 py-2 text-center">
@@ -181,13 +181,6 @@
         event.preventDefault();
     }
     })
-    
-    
-
-
-
-
-
 
     //reset_button
     document.querySelectorAll('.reset_button').forEach(button => {
@@ -220,7 +213,7 @@
             var sets = tableRow.querySelector('input[name="sets"]').value;
             var reps = tableRow.querySelector('input[name="reps"]').value;
             var rating = tableRow.querySelector('input[name="rating"]').value;
-            
+
             var exerciseId = this.getAttribute('data-exercise-id')
             var programId = this.getAttribute('data-program-id')
 
