@@ -409,7 +409,7 @@ def details():
             notes = form_data.get('notes')
             sets = form_data.get('sets')
             reps = form_data.get('reps')
-            rating = int(form_data.get('rating')) if form_data.get('rating') is not '' else None
+            rating = int(form_data.get('rating')) if form_data.get('rating') != '' else None
             result, status_code = db_block(add_exercise_to_program, program_id, exercise_id, notes, sets, reps, rating, logged_in_user)
 
             # DEV ONLY
@@ -433,7 +433,38 @@ def update_or_remove_program_exercise(exercise_id, program_id):
         user_id = logged_in_user['id']
     
     if request.method == "PUT":
-        pass
+        
+        try:
+            fields = ("notes", "sets", "reps", "rating")
+            data = process_request(request, *fields)
+
+            # DEV ONLY
+            """
+            print(f'values: {data}')
+            notes, sets, reps, rating = data['notes'], data["sets"], data["reps"], int(data["rating"])
+            print(f'exercise_id: {exercise_id}')
+            print(f'program_id: {program_id}')
+
+            print(f'notes: {notes}')
+            print(f'notes: {sets}')
+            print(f'notes: {reps}')
+            print(f'rating: {rating}')
+            """
+
+            query = "SET "
+            num_fields = len(data)
+            for index, (key, value) in enumerate(data.items()):
+                if value is not None:
+                    query += f"{key} = '{value}'"
+                    if index < num_fields - 1:
+                        query += ", "
+
+            result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query)
+
+            return result, status_code
+        except:
+            return redirect(f'/programs/program/{user_id}/{program_id}')
+            
 
     if request.method == "DELETE":
         try:

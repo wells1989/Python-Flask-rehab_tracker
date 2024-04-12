@@ -22,7 +22,6 @@
         </form>
     </div>
 
-
     <div class="container mx-auto mt-20 bg-white p-8 rounded-md shadow-md max-w-xxxl">
         <h2 class="text-center text-2xl font-bold mb-4">Program Exercises</h2>
         {% if program_exercises != 'No instance found' %}
@@ -40,19 +39,48 @@
             </thead>
             <tbody>
                 {% for program_exercise in program_exercises %}
-                <tr>
+                <tr class="table_row">
                     <td class="border px-4 py-2 text-center">{{ program_exercise.exercise_id }}</td>
                     <td class="border px-4 py-2 flex justify-center align-center">
                         <img src="{{ program_exercise.image }}" alt="{{ program_exercise.name }}" class="w-40 h-40 object-cover rounded-full mr-4">
                     </td>
                     <td class="border px-4 py-2 text-center">{{ program_exercise.name }}</td>
 
-                    <td class="border px-4 py-2 text-center">{{ program_exercise.notes }}</td>
-                    <td class="border px-4 py-2 text-center">{{ program_exercise.sets }}</td>
-                    <td class="border px-4 py-2 text-center">{{ program_exercise.reps }}</td>
-                    <td class="border px-4 py-2 text-center">{{ program_exercise.rating }}</td>
                     <td class="border px-4 py-2 text-center">
-                        <button class="remove_button border px-4 py-2 bg-red-500 text-white px-3 py-1 rounded-md" data-program-exercise-id="{{ program_exercise.exercise_id }}">Remove</button>
+                        <div class="form-field">
+                            <label for="notes">Notes:</label>
+                            <input type="textarea" name="notes" value="{{ program_exercise.notes }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <label for="sets">Sets:</label>
+                            <input type="number" name="sets" value="{{ program_exercise.sets }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <label for="reps">Reps:</label>
+                            <input type="number" name="reps" value="{{ program_exercise.reps }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <label for="rating">Rating:</label>
+                            <input type="number" name="rating" min="1" max="3" value="{{ program_exercise.rating }}" class="bg-blue-100 shadow-sm rounded-md p-2 w-full">
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <button class="edit_button border px-4 py-2 bg-yellow-500 text-white px-3 py-1 rounded-md" 
+                            data-exercise-id="{{ program_exercise.exercise_id }}" data-program-id="{{ program.id }}" data-notes="{{ program_exercise.notes}}"
+                            data-sets="{{ program_exercise.sets }}" data-reps="{{ program_exercise.reps }}" rating="{{ program_exercise.rating }}">Edit</button>
+                        </div>
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <div class="form-field">
+                            <button class="remove_button border px-4 py-2 bg-red-500 text-white px-3 py-1 rounded-md" data-program-exercise-id="{{ program_exercise.exercise_id }}">Remove</button>
+                        </div>
                     </td>
                     
                 </tr>
@@ -61,7 +89,6 @@
         </table>
         {% endif %}
     </div>
-
 
     <div class="container mx-auto flex flex-wrap mt-20 bg-white p-8 rounded-md shadow-md max-w-xxxl">
         <!-- Add New exercise / view your exercises section -->
@@ -127,6 +154,80 @@
 </div>
 
 <script>
+    /*
+    // program_exercise updating ... resetting (capture on page load, on reset button click setting to initial values?)
+    document.querySelectorAll('.edit_button').forEach(button => {
+    button.addEventListener('click', function() {
+        // initial values
+        var exerciseId = this.getAttribute('data-exercise-id')
+        var programId = this.getAttribute('data-program-id')
+        var notes = this.getAttribute('data-notes')
+        var sets = this.getAttribute('data-sets')
+        var reps = this.getAttribute('data-reps')
+        var rating = this.getAttribute('data-rating')
+
+        var message = `Exercise ID: ${exerciseId}\nProgram ID: ${programId}\nNotes: ${notes}\nSets: ${sets}\nReps: ${reps}\nRating: ${rating}`;
+        alert(message);
+
+    });
+});
+*/
+
+    // Changing program_exercises 
+    document.querySelectorAll('.edit_button').forEach(button => {
+        // NOTE: arrow functions do not have this context, hence using normal function below
+        button.addEventListener('click', function() {
+            var tableRow = this.closest('tr');
+
+            var notes = tableRow.querySelector('input[name="notes"]').value;
+            var sets = tableRow.querySelector('input[name="sets"]').value;
+            var reps = tableRow.querySelector('input[name="reps"]').value;
+            var rating = tableRow.querySelector('input[name="rating"]').value;
+            
+            var exerciseId = this.getAttribute('data-exercise-id')
+            var programId = this.getAttribute('data-program-id')
+            
+            var message = `Exercise ID: ${exerciseId}\nProgram ID: ${programId}\nNotes: ${notes}\nSets: ${sets}\nReps: ${reps}\nRating: ${rating}`;
+            
+            alert(message);
+
+            url = `/details/${exerciseId}/${programId}`
+
+            data = {
+                notes: notes,
+                sets: sets,
+                reps: reps,
+                rating: rating
+            }
+
+            fetch(url, {
+                method: "PUT",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then((response) => {
+                if (response.ok) {
+                    alert("program exercise updated!")
+                    window.location.reload()
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+            
+            })
+    })
+
+        
+
+
+
+
+
+
+
     // deleting a created exercise
     document.querySelectorAll('.delete_button').forEach(button => {
         button.addEventListener('click', function() {
@@ -152,7 +253,6 @@
             console.log(error)
         })
     }
-
 
     // Creating new exercise
     document.getElementById("addExerciseButton").addEventListener('click', function(event) {
