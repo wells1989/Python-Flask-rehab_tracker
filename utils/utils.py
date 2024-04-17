@@ -87,10 +87,12 @@ def db_block(function, *args, **kwargs):
         print(f"An error occurred: {e}")
         if 'conn' in locals() and conn: # searching local variables for conn (to prevent error if conn = None)
             conn.rollback()
+            return e, 500
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         if 'conn' in locals() and conn:
             conn.rollback()
+            return e, 400
     finally:
         database_close(conn, cursor)
     

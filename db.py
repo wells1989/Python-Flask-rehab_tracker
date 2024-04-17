@@ -335,7 +335,7 @@ def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, 
 # e.g. db_block(add_exercise_to_program, 2, 6, "trying it for now", 3, 10, 1, logged_in_user)
 
 
-def update_exercise_in_program(conn, cursor, program_id, exercise_id, logged_in_user, query):
+def update_exercise_in_program(conn, cursor, program_id, exercise_id, logged_in_user, query, values):
 
     cursor.execute("SELECT * FROM programs WHERE id = %s", (program_id,))
     program = cursor.fetchone() 
@@ -348,7 +348,7 @@ def update_exercise_in_program(conn, cursor, program_id, exercise_id, logged_in_
         return "exercise not found", 404
 
     if admin_check(logged_in_user) or logged_in_user["id"] == program[1]:
-        cursor.execute("UPDATE programs_exercises " + query + " WHERE exercise_id = %s AND program_id = %s", (exercise_id, program_id,))
+        cursor.execute("UPDATE programs_exercises " + query + " WHERE exercise_id = %s AND program_id = %s", (*values, exercise_id, program_id,))
         conn.commit()
         if cursor.rowcount > 0:
             return "Update successful", 201

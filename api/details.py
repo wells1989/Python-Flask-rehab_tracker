@@ -68,15 +68,14 @@ def update_or_remove_program_exercise(exercise_id, program_id):
 
             query = "SET "
             num_fields = len(data)
+            values= []
             for index, (key, value) in enumerate(data.items()):
-                    if data[key] is None:
-                        query += f"{key} = NULL"
-                    else:
-                        query += f"{key} = '{value}'"
+                    query += f"{key} = %s"
+                    values.append(value)
                     if index < num_fields - 1:
                         query += ", "
-            
-            result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query)
+                    
+            result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query, values)
 
             return result, status_code
         except:

@@ -265,7 +265,11 @@
         })
         .then((response) => {
             if (response.ok) {
+                alert(`exercise ${exerciseId} successfully deleted`)
                 window.location.reload()
+            }
+            else {
+                alert("an error occurred")
             }
         })
         .catch((error) => {
