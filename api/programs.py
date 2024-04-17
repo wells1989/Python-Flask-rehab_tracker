@@ -39,10 +39,13 @@ def programs_get_and_post(user_id):
         
         result, status_code = db_block(create_program, logged_in_user, start_date, end_date, rating, description)
 
-        if status_code != 200:
+        print(result)
+        print(status_code)
+        if status_code == 200:
+            return redirect("/?success=true")
+        else:
             return result, status_code
 
-        return redirect("/", code=301)
 
 
 

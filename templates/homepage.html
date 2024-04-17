@@ -45,6 +45,7 @@
 
         <!-- New Program Form -->
         <div class="mt-8 shadow-lg overflow-y-scroll">
+            <div id="alertContainer"></div>
             <h2 class="text-xl font-bold mb-4">Create New Program</h2>
             <form action="/programs/{{ logged_in_user.id }}" method="post" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -81,6 +82,7 @@
 
 <script src="https://cdn.tailwindcss.com/"></script>
 <script>
+    // deleting program buttons
     document.querySelectorAll('.bg-red-500').forEach(button => {
         button.addEventListener('click', function() {
             var programId = this.getAttribute('data-program-id');
@@ -101,6 +103,24 @@
         }
     })
         
+    }
+
+
+    // displaying the messages if a successful redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSuccess = urlParams.get('success');
+
+    // Function to show success or failure alert
+    function showMessage(message, type) {
+        const alertContainer = document.getElementById('alertContainer');
+        alertContainer.innerHTML = `<div class="bg-${type}-100 border border-${type}-400 text-${type}-700 px-4 py-3 rounded relative" role="alert">${message}</div>`;
+    }
+
+    // Show appropriate message based on success parameter
+    if (isSuccess === 'true') {
+        showMessage('Program created successfully.', 'green');
+    } else if (isSuccess === 'false') {
+        showMessage('Failed to create program. Please try again.', 'red');
     }
 </script>
 
