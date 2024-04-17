@@ -7,11 +7,6 @@ template_dir = os.path.join(current_dir, '..', 'templates')
 
 main_bp = Blueprint('main', __name__, url_prefix='/', template_folder=template_dir)
 
-@main_bp.route('/test', methods=["GET"])
-def test():
-    return render_template('test.html')
-
-
 # homepage route
 @main_bp.route('/', methods=["GET"])
 def homepage():
@@ -38,12 +33,11 @@ def register():
     if request.method == "POST":
 
         try:
-
             fields = ('name', 'email', 'password', 'profile_pic', 'bio')
             values = process_request(request, *fields)
             
             name, email, password, profile_pic, bio = values['name'], values["email"], values['password'], values['profile_pic'], values['bio']
-            
+
             logged_in_user, status_code = db_block(register_user, name, email, password, profile_pic, bio)
             
             # dev only
@@ -55,9 +49,10 @@ def register():
             else:
                 session['logged_in_user'] = logged_in_user 
                 return redirect("/", code=301)
+
         except:
-            return redirect("/", code=301)
-    
+            return redirect("/")
+
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -66,6 +61,7 @@ def login():
 
     if request.method == "POST":
         try:
+
             fields = ('email', 'password')
             values = process_request(request, *fields)
             
@@ -89,7 +85,7 @@ def login():
 def logout():
     logged_in_user = session.get('logged_in_user')
     if not logged_in_user:
-        return f'no user logged in', 400
+        return render_template('login.html', error="no logged in user")
     else:
         session["logged_in_user"] = None
         return redirect("/", code=301)

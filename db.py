@@ -435,6 +435,9 @@ def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=
 
     if isinstance(user_check, dict):
         return "User already exists, please log in", 409
+    
+    if len(name) < 3:
+        return "Name needs to be at least 3 characters long", 400
 
     if validate_email(email) and validate_password(user_password):
         hashed_password = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
@@ -465,6 +468,9 @@ def register_user(conn, cursor, name, email, user_password, profile_pic="", bio=
 
 # log in
 def log_in(conn, cursor, email, user_password):
+
+    if not email or not user_password:
+        return "missing input fields", 400
 
     user = db_block(search_for_user, email)
 

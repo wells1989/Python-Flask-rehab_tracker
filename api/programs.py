@@ -16,9 +16,14 @@ def programs_get_and_post(user_id):
         return "need to log in first!", 401
         
     if request.method == "GET":
-        result = db_block(view_all_user_programs, logged_in_user, user_id)
-        if result:
-                return result
+        try:
+            result. status_code = db_block(view_all_user_programs, logged_in_user, user_id)
+            if status_code == 200:
+                return result, status_code
+            else:
+                return render_template("error_template.html", message=result)
+        except:
+            return redirect("/")
         
     elif request.method == "POST":
 
@@ -38,6 +43,7 @@ def programs_get_and_post(user_id):
             return result, status_code
 
         return redirect("/", code=301)
+
 
 
 # individual program routes

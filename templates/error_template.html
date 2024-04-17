@@ -9,13 +9,22 @@
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800 mb-4">Error</h1>
-        <p class="text-gray-600 mb-6">An error occurred.</p>
-        <button onclick="redirectToHome()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        {% if message %}
+        <p class="text-red-700 font-bold mb-4">{{ message }}</p>
+        {% endif %}
+        <button onclick="goBack()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Go Back
+        </button>
+        <button onclick="redirectToHome()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"> <!-- Add margin to separate buttons -->
             Go to Home
         </button>
     </div>
 
     <script>
+        function goBack() {
+            window.history.back();
+        }
+
         function redirectToHome() {
             window.location.href = "/";
         }

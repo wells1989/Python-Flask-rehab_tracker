@@ -40,6 +40,13 @@
 
 
 <script>
+
+    // email validation
+    function isValidEmail(email) {
+        var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    }
+
     // User Form
     document.getElementById('editUser').addEventListener('click', function(event) {
         event.preventDefault();
@@ -47,6 +54,19 @@
         var form = document.getElementById('userForm');
         var name = form.querySelector('input[name="name"]').value;
         var email = form.querySelector('input[name="email"]').value;
+
+        // Check if name and email fields are empty
+        if (name.trim() === '') {
+            event.preventDefault();
+            alert('Missing Name.');
+            return
+        }
+
+        if (email.trim() === '' || !isValidEmail(email)) {
+            event.preventDefault();
+            alert('Please enter a valid email address.');
+            return
+        }
 
         var url = '/users/{{ user.id }}';
 
@@ -69,6 +89,7 @@
                 alert("user updated!")
                 window.location.reload()
             } else {
+                alert("error occurred")
                 console.error('Error:', response.statusText);
             }
         })

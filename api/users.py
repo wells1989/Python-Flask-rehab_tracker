@@ -8,20 +8,6 @@ template_dir = os.path.join(current_dir, '..', 'templates')
 users_bp = Blueprint('users', __name__, url_prefix='/users', template_folder=template_dir)
 
 
-## User routes NOT NEEDED FOR APP DEV ONLY
-@users_bp.route('/', methods=["GET"])
-def users():
-    logged_in_user = session.get('logged_in_user')
-    if not logged_in_user:
-        return "Unauthorised", 401
-
-    result = db_block(view_all_users, logged_in_user)
-    if result:
-            return result
-    else:
-        return 404
-
-
 ## individual User routes
 @users_bp.route("/<int:id>", methods=["GET", "PUT", "DELETE"])
 def user(id):
@@ -31,21 +17,25 @@ def user(id):
 
     if request.method == "GET":
         try:
-            result = db_block(view_user, id, logged_in_user)
-            if result:
+            result, status_code = db_block(view_user, id, logged_in_user)
+            if status_code == 200:
                 profile = db_block(view_profile, id, logged_in_user)[0]
                 return render_template("profile_page.html", user=logged_in_user, profile=profile)
             else: 
-                return redirect("/")
+                return redirect("error_template", message=result)
         except:
             return redirect("/")
         
     elif request.method == "PUT":
         try:
+            
+            if (len(request.json.get('name') < 3)) or (not validate_email(request.json.get('email'))):
+                return "please insert valid fields", 400
+
             result, status_code = update_wrapper(request, ["name", "email"], id, update_user, logged_in_user)
 
             if status_code > 400:
-                return "Failed to update user", status_code
+                return redirect("error_template", message="failed to update user")
 
             updated_user, status_code = db_block(view_user, id, logged_in_user)
 
@@ -83,6 +73,7 @@ def user(id):
 def delete_route():
     return render_template("user_deleted.html")
 
+
 ## User profile routes
 @users_bp.route("/profiles/<int:user_id>", methods=["GET", "PUT"]) # user_id, NOT profile id
 def profile(user_id):
@@ -92,15 +83,19 @@ def profile(user_id):
     
     if request.method == "GET": 
         try:
-            profile, status_code = db_block(view_profile, user_id, logged_in_user)
-            if profile:
+            result, status_code = db_block(view_profile, user_id, logged_in_user)
+            if result:
                 if status_code == 401:
                     return render_template("not_authorised.html")
+                
+                elif status_code != 200:
+                    return render_template("error_template.html", message=result)
+                
                 # dev only, for postman queries
                 if request.accept_mimetypes.accept_json:
-                    return jsonify({"user": logged_in_user, "profile": profile}), 200
+                    return jsonify({"user": logged_in_user, "profile": result}), 200
                 else:
-                    return render_template("profile_page.html", user=user, profile=profile)
+                    return render_template("profile_page.html", user=user, profile=result)
             else:
                 return 404
         except:
@@ -115,7 +110,7 @@ def profile(user_id):
                 return redirect(f'/users/profiles/{id}')
 
 
-# password reset ## GET DEV ONLY, NOT USED (POST is though ...)
+# password reset
 @users_bp.route('/<int:user_id>/password_reset', methods=["GET", "POST"])
 def password_reset(user_id):
     logged_in_user = session.get('logged_in_user')
@@ -133,7 +128,10 @@ def password_reset(user_id):
 
             result, status_code = db_block(change_password, old_password, new_password, logged_in_user, user_id)
 
-            return result, status_code
+            if status_code == 200:
+                return result, status_code
+            else:
+                return "Incorrect password. Please try again.", 400
         except:
             return redirect(f'/users/profiles/{id}')
 

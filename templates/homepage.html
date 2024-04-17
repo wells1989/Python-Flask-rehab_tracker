@@ -81,7 +81,7 @@
 
 <script src="https://cdn.tailwindcss.com/"></script>
 <script>
-    document.querySelectorAll('.bg-red-500').forEach(button => { // selecting all the delete
+    document.querySelectorAll('.bg-red-500').forEach(button => {
         button.addEventListener('click', function() {
             var programId = this.getAttribute('data-program-id');
             deleteProgram(programId);
