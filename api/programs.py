@@ -82,15 +82,30 @@ def programs_update_and_delete(program_id):
     if request.method == "PUT":
 
         try:
-            data = request.get_json()
-            if not all(field in data for field in ["start_date", "end_date", "rating", "description"]):
+            raw_data = request.get_json()
+            if not all(field in raw_data for field in ["start_date", "end_date", "rating", "description"]):
                 return redirect(f'/programs/{program_id}')
             
-            # print(data) # {'start_date': '2024-04-12', 'end_date': '2024-04-19', 'rating': '1', 'user_id': '62', 'description': 'h there'}
+            print(raw_data)
 
-            result = update_wrapper(request, ["start_date", "end_date", "rating", "description"], program_id, update_program, logged_in_user)
+            fields = ("start_date", "end_date", "rating", "description")
+            data = process_request(request, *fields)
 
-            status_code = result[1]
+            for key in ["start_date", "end_date", "rating"]:
+                if data[key] == '':
+                    data[key] = None
+            
+            query = "SET "
+            values=[]
+            num_fields = len(data)
+            for index, (key, value) in enumerate(data.items()):
+
+                query += f"{key} = %s"
+                values.append(value)
+                if index < num_fields - 1:
+                    query += ", "
+
+            result, status_code = db_block(update_program, query, program_id, values, logged_in_user )
 
             if status_code not in [200, 201]:
                 return "Failed to update program", status_code

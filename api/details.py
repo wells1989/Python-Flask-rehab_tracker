@@ -56,7 +56,7 @@ def update_or_remove_program_exercise(exercise_id, program_id):
     
     if request.method == "PUT":
         
-        # try:
+        try:
             fields = ("notes", "sets", "reps", "rating")
             data = process_request(request, *fields)
 
@@ -69,16 +69,18 @@ def update_or_remove_program_exercise(exercise_id, program_id):
             query = "SET "
             num_fields = len(data)
             for index, (key, value) in enumerate(data.items()):
-                query += f"{key} = '{value}'"
-                if index < num_fields - 1:
-                    query += ", "
+                    if data[key] is None:
+                        query += f"{key} = NULL"
+                    else:
+                        query += f"{key} = '{value}'"
+                    if index < num_fields - 1:
+                        query += ", "
             
-
             result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query)
 
             return result, status_code
-        #except:
-            #return redirect(f'/programs/program/{user_id}/{program_id}')
+        except:
+            return redirect(f'/programs/program/{user_id}/{program_id}')
             
 
     if request.method == "DELETE":

@@ -266,7 +266,9 @@ def update_program(conn, cursor, query, program_id, values, logged_in_user):
         user_id = program[1]
 
     if admin_check(logged_in_user) or logged_in_user["id"] == user_id:
-        cursor.execute("UPDATE programs " + query + " WHERE id = %s", values + [program_id]) # restricted exercises that user created
+        full_query = f'UPDATE programs {query} WHERE id = %s'
+        print(full_query)
+        cursor.execute(full_query, (*values, program_id))
         conn.commit()
         if cursor.rowcount > 0:
             return "Update successful", 201
