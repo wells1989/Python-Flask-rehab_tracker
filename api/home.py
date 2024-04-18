@@ -1,6 +1,7 @@
 from flask import Blueprint, session, render_template, redirect, request, jsonify
 import os
 from db import *
+from utils.utils import request_missing_fields
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 template_dir = os.path.join(current_dir, '..', 'templates')
@@ -34,6 +35,12 @@ def register():
 
         try:
             fields = ('name', 'email', 'password', 'profile_pic', 'bio')
+
+            # checking required data
+            missing_fields, status_code = request_missing_fields(request, ['name', 'email', 'password'])
+            if status_code != 200:
+                return render_template("error_template.html", message=missing_fields), status_code
+            
             values = process_request(request, *fields)
             
             name, email, password, profile_pic, bio = values['name'], values["email"], values['password'], values['profile_pic'], values['bio']
@@ -60,9 +67,13 @@ def login():
         return render_template('login.html')
 
     if request.method == "POST":
-        try:
-
             fields = ('email', 'password')
+
+            # checking required data
+            missing_fields, status_code = request_missing_fields(request, fields)
+            if status_code != 200:
+                return render_template("error_template.html", message=missing_fields), status_code
+                
             values = process_request(request, *fields)
             
             email, password = values['email'], values['password']
@@ -78,8 +89,6 @@ def login():
                     return f'logged_in_user: {logged_in_user}', 200
                 
                 return redirect("/", code=301) # NOTE: need 301 status for successful redirects, otherwise will get continued "should be redirected" message ...
-        except:
-            return redirect("/", code=301)
 
 @main_bp.route('/logout', methods=["POST"])
 def logout():

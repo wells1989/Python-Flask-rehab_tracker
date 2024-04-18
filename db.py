@@ -158,7 +158,7 @@ def create_exercise(conn, cursor, logged_in_user, name, image=""):
     created_exercise = cursor.fetchone() 
 
     if created_exercise:
-        return created_exercise, 201
+        return 'exercise created', 201
     else:
         return "Failed to create exercise", 500
 

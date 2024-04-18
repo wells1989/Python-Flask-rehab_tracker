@@ -2,6 +2,7 @@ from flask import Blueprint, session, render_template, redirect, request, jsonif
 import os
 from db import *
 from datetime import datetime
+from utils.utils import request_missing_fields
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 template_dir = os.path.join(current_dir, '..', 'templates')
@@ -20,6 +21,13 @@ def details():
     if request.method == "POST":
         
         try: 
+
+            required_fields = ["exercise_id", "program_id"]
+
+            missing_fields, status_code = request_missing_fields(request, required_fields)
+            if status_code != 200:
+                return render_template("error_template.html", message=missing_fields), status_code
+
             form_data = request.form.to_dict()
             exercise_id = form_data.get('exercise_id')
         

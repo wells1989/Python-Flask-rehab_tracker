@@ -4,6 +4,7 @@ import psycopg2
 from dotenv import load_dotenv
 import bcrypt
 import binascii
+from flask import jsonify
 
 load_dotenv()
 
@@ -135,4 +136,18 @@ def process_request(request, *field_names):
         values[field_name] = data.get(field_name)
 
     return values
+
+
+def request_missing_fields(request, fields):
+    if request.form:  
+        for field in fields:
+            if not request.form.get(field):
+                return f'Missing field: {field}', 400
+    elif request.json:
+        for field in fields:
+            if field not in request.json:
+                return f'Missing field: {field}', 400
+    else:
+        return 'error: No data provided', 400
     
+    return 'data okay', 200

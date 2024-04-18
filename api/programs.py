@@ -1,6 +1,7 @@
 from flask import Blueprint, session, render_template, redirect, request, jsonify, url_for
 import os
 from db import *
+from utils.utils import request_missing_fields
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 template_dir = os.path.join(current_dir, '..', 'templates')
@@ -28,6 +29,12 @@ def programs_get_and_post(user_id):
     elif request.method == "POST":
 
         fields = ('start_date', 'end_date', 'description')
+
+        # checking required data
+        missing_fields, status_code = request_missing_fields(request, fields)
+        if status_code != 200:
+            return render_template("error_template.html", message=missing_fields), status_code
+
         values = process_request(request, *fields)
 
         start_date, end_date, description = values['start_date'], values["end_date"], values['description']
@@ -39,8 +46,7 @@ def programs_get_and_post(user_id):
         
         result, status_code = db_block(create_program, logged_in_user, start_date, end_date, rating, description)
 
-        print(result)
-        print(status_code)
+
         if status_code == 200:
             return redirect("/?success=true")
         else:
@@ -57,26 +63,29 @@ def user_program(user_id, program_id):
         return render_template("not_authorised.html")
     
     try:
-        program, p_status_code = db_block(view_program, logged_in_user, user_id, program_id)
+        program_result, p_status_code = db_block(view_program, logged_in_user, user_id, program_id)
         if p_status_code != 200:
-            return redirect("/", code=301)
+            return render_template("error_template.html", message=program_result), p_status_code
 
-        program_exercises, pe_status_code  = db_block(view_programs_exercises, logged_in_user, user_id, program_id)
-        if pe_status_code == 401:
-            return render_template("not_authorised.html")
+        program_exercises_result, pe_status_code  = db_block(view_programs_exercises, logged_in_user, user_id, program_id)
+        if pe_status_code != 200:
+            return render_template("error_template.html", message=program_exercises_result), pe_status_code
 
-        exercises, e_status_code = db_block(view_all_exercises)
+        exercises_result, e_status_code = db_block(view_all_exercises)
+        if e_status_code != 200:
+            return render_template("error_template.html", message=exercises_result), e_status_code
 
-        users_exercises, ue_status_code = db_block(view_users_exercises, logged_in_user)
-        if ue_status_code == 401:
-            return render_template("not_authorised.html")
+        users_exercises_result, ue_status_code = db_block(view_users_exercises, logged_in_user)
+        if ue_status_code != 200:
+            return render_template("error_template.html", message=users_exercises_result), ue_status_code
 
+        # DEV ONLY
         user_agent = request.headers.get('User-Agent', '')
         if 'Postman' in user_agent:
-            return program, program_exercises
+            return program_result, program_exercises_result
 
         else:
-            return render_template("program_page.html", program=program, program_exercises=program_exercises, exercises=exercises, users_exercises=users_exercises)
+            return render_template("program_page.html", program=program_result, program_exercises=program_exercises_result, exercises=exercises_result, users_exercises=users_exercises_result)
     except:
         return redirect("/", code=301)
 
@@ -91,13 +100,13 @@ def programs_update_and_delete(program_id):
     if request.method == "PUT":
 
         try:
-            raw_data = request.get_json()
-            if not all(field in raw_data for field in ["start_date", "end_date", "rating", "description"]):
-                return redirect(f'/programs/{program_id}')
-            
-            print(raw_data)
-
-            fields = ("start_date", "end_date", "rating", "description")
+            fields = ["start_date", "end_date", "rating", "description"]
+        
+            # checking required data
+            missing_fields, status_code = request_missing_fields(request, fields)
+            if status_code != 200:
+                return render_template("error_template.html", message=missing_fields), status_code
+                
             data = process_request(request, *fields)
 
             for key in ["start_date", "end_date", "rating"]:
@@ -117,7 +126,7 @@ def programs_update_and_delete(program_id):
             result, status_code = db_block(update_program, query, program_id, values, logged_in_user )
 
             if status_code not in [200, 201]:
-                return "Failed to update program", status_code
+                render_template("error_template.html", message=result), status_code
             else:
                 return "success", status_code
         except:
@@ -133,9 +142,11 @@ def programs_update_and_delete(program_id):
                 return result, status_code
 
             if status_code == 401:
-                return redirect("not_authorised.html")
+                return render_template("not_authorised.html")
+            elif status_code != 201:
+                return render_template("error_template.html", message=result), status_code
             else:
-                return redirect("/", code=301)
+                return result, status_code
         except:
             return redirect("/", code=301)
 

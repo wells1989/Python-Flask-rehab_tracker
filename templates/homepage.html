@@ -98,13 +98,13 @@
             },
         })
         .then(response => {
-        if (response) {
+        if (response.ok) {
+            alert(`program with id ${programId} successfully deleted`)
             window.location.reload();
         }
     })
         
     }
-
 
     // displaying the messages if a successful redirect
     const urlParams = new URLSearchParams(window.location.search);
