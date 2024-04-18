@@ -266,6 +266,11 @@ def add_exercise_to_program(conn, cursor, program_id, exercise_id, notes, sets, 
         return "program not found", 404
     if not exercise:
         return "exercise not found", 404
+    
+    cursor.execute("SELECT * FROM programs_exercises WHERE program_id = %s AND exercise_id = %s", (program_id, exercise_id))
+    duplicate = cursor.fetchone()
+    if duplicate:
+        return "exercise already in program", 400
 
     if program[1] == logged_in_user["id"] or admin_check(logged_in_user):
         exercise_name = exercise[1]
