@@ -12,29 +12,46 @@
 <nav class="bg-gray-800 p-4">
     <div class="container mx-auto flex justify-between items-center">
         <img src="{{ url_for('static', filename='images/heart_icon.png') }}" alt="logo" />
-        <a href="/" class="text-white hover:text-gray-300">Home</a>
-
-        {% if logged_in_user %}
-            <div class="text-white">
-                <span class="mr-4">Welcome{{ logged_in_user.name }}</span>
-                <span>{{ logged_in_user.email }}</span>
-            </div>
-            {% else %}
-                <span class="mr-4 text-white">Rehab tracker app</span>
-            {% endif %}
-
-        <!-- Buttons -->
-        {% if logged_in_user %}
-        <div class="flex">
-            
-            <!-- Logout button -->
-            <form action="/logout" method="post">
-                <button type="submit" class="text-white hover:text-gray-300 mr-4">Logout</button>
-            </form>
-            <!-- Profile button -->
-            <a href="/users/{{ logged_in_user.id }}" class="text-white hover:text-gray-300">Profile</a>
-        </div>
+        {% if not logged_in_user %}
+        <span class="mr-4 text-white">Rehab tracker app</span>
         {% endif %}
+        
+        <!-- Dropdown for smaller screens -->
+        <div class="sm:hidden">
+            <div class="relative">
+                <button class="text-white hover:text-gray-300 focus:outline-none" id="dropdown_button">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+
+                <div class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md overflow-hidden z-10" id="dropdown_list">
+                    <a href="/" class="block px-4 py-2 text-white text-sm hover:bg-gray-700">Home</a>
+                    {% if logged_in_user %}
+                        <a href="/users/{{ logged_in_user.id }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Profile</a>
+                        <form action="/logout" method="post">
+                            <button href="/users/{{ logged_in_user.id }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Logout</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if logged_in_user %}
+            <div class="text-white hidden sm:block">
+                <span class="mr-4">Welcome {{ logged_in_user.name }}</span>
+            </div>
+        {% endif %}
+
+        <div class="hidden sm:flex sm:items-center sm:space-x-4">
+            <a href="/" class="text-white hover:text-gray-300">Home</a>
+            {% if logged_in_user %}
+            <a href="/users/{{ logged_in_user.id }}" class="text-white hover:text-gray-300">Profile</a>
+            <form action="/logout" method="post">
+                <button type="submit" class="text-white hover:text-gray-300">Logout</button>
+            </form>
+        </div>
+            {% endif %}
     </div>
 </nav>
 
@@ -44,5 +61,13 @@
     {% block content %}
     {% endblock %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script>
+        document.getElementById("dropdown_button").addEventListener('click', function() {
+                const dropdownMenu = document.querySelector('.bg-gray-800.absolute');
+                dropdownMenu.classList.toggle('hidden');
+            });
+        </script>
+    
 </body>
 </html>
