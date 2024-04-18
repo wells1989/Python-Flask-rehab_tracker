@@ -387,7 +387,6 @@
         var actionUrl = form.getAttribute("action"); // i.e. "/programs/{{ program.id }}"
         var programId = actionUrl.split("/").pop(); // i.e. {{ program.id }}
 
-        console.log("Program ID:", programId);
         var url = `/details/${exerciseId}/${programId}`
     
         fetch(url, {
@@ -398,7 +397,11 @@
         })
         .then((response) => {
             if (response.ok) {
+                alert("exercise removed from program")
                 window.location.reload()
+            }
+            else {
+                alert("issue with deletion")
             }
         })
         .catch((error) => {

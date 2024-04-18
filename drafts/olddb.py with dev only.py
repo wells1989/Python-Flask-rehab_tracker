@@ -428,3 +428,36 @@ def change_password(conn, cursor, old_password, new_password, logged_in_user, id
        
     else:
         return "not authorised", 401
+
+    
+# DEV ONLY
+# shows all the users exercise_programs DEV ONLY (potential for grid displays ...)
+def view_users_past_exercises(conn, cursor, logged_in_user, user_id):
+
+    if admin_check(logged_in_user) or user_id == logged_in_user["id"]:
+        cursor.execute("SELECT * FROM programs_exercises WHERE user_id = %s", (user_id,))
+        if cursor.rowcount == 0:
+            return "No instance found", 401
+        results = results_to_dict(cursor, "list")
+
+        return results, 200
+    else:
+        return "not authorised", 401
+#logging in / out example
+# logged_in_user = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
+## # vasile password no longer working due to hashing issue logged_in_user = db_block(log_in, "vasile@gmail.com", "vasile1989$")
+
+# logged_in_user = db_block(log_in, "frankie@gmail.com", "frank1989$")
+# logged_in_user = db_block(log_in, "pantuda@gmail.com", ""password": "testing123%")
+
+
+if __name__ == "__main__":
+    logged_in_user, _ = db_block(log_in, "wellspaul554@gmail.com", "wells1989%")
+
+    # logged_in_user, _ = db_block(log_in, "pantufa@gmail.com", "pantufa123%")
+
+    print(logged_in_user)
+
+    # DEV ONLY print(db_block(view_program, logged_in_user, 28, 10)) ## not working on postman, as getting need to log in first ...
+
+

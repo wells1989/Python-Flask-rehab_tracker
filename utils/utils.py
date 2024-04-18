@@ -151,3 +151,16 @@ def request_missing_fields(request, fields):
         return 'error: No data provided', 400
     
     return 'data okay', 200
+
+
+def search_for_user(conn, cursor, email):
+    cursor.execute("SELECT * FROM users")
+
+    if cursor.rowcount == 0:
+        return "No users found", 404
+    else:
+        results = results_to_dict(cursor, "list")
+        for user in results:
+            if user['email'] == email:
+                return user
+        return "User not found for email", 404

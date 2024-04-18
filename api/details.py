@@ -21,7 +21,6 @@ def details():
     if request.method == "POST":
         
         try: 
-
             required_fields = ["exercise_id", "program_id"]
 
             missing_fields, status_code = request_missing_fields(request, required_fields)
@@ -66,12 +65,17 @@ def update_or_remove_program_exercise(exercise_id, program_id):
         
         try:
             fields = ("notes", "sets", "reps", "rating")
+
+            missing_fields, status_code = request_missing_fields(request, fields)
+            if status_code != 200:
+                return render_template("error_template.html", message=missing_fields), status_code
+
             data = process_request(request, *fields)
 
             data['lastmod'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
 
             for key in ["sets", "reps", "rating"]: 
-                if data[key] == '' or not data[key].isnumeric():
+                if data[key] == '' or not str(data[key]).isnumeric():
                     data[key] = None
 
             query = "SET "
@@ -86,8 +90,10 @@ def update_or_remove_program_exercise(exercise_id, program_id):
             result, status_code = db_block(update_exercise_in_program, program_id, exercise_id, logged_in_user, query, values)
 
             return result, status_code
+
         except:
-            return redirect(f'/programs/program/{user_id}/{program_id}')
+            return render_template("error_template.html", message="an error occurred"), 400
+
             
 
     if request.method == "DELETE":
@@ -96,4 +102,4 @@ def update_or_remove_program_exercise(exercise_id, program_id):
 
             return result, status_code
         except:
-            return redirect(f'/programs/program/{user_id}/{program_id}')
+            return render_template("error_template.html", message="an error occurred"), 400
