@@ -20,7 +20,7 @@ def user(id):
             result, status_code = db_block(view_user, id, logged_in_user)
             if status_code == 200:
                 profile = db_block(view_profile, id, logged_in_user)[0]
-                return render_template("profile_page.html", user=logged_in_user, profile=profile)
+                return render_template("profile_page.html", user=logged_in_user, profile=profile, logged_in_user=logged_in_user)
             else: 
                 return redirect("error_template", message=result)
         except:

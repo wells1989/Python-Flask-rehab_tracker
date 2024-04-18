@@ -85,7 +85,7 @@ def user_program(user_id, program_id):
             return program_result, program_exercises_result
 
         else:
-            return render_template("program_page.html", program=program_result, program_exercises=program_exercises_result, exercises=exercises_result, users_exercises=users_exercises_result)
+            return render_template("program_page.html", program=program_result, program_exercises=program_exercises_result, exercises=exercises_result, users_exercises=users_exercises_result, logged_in_user=logged_in_user)
     except:
         return redirect("/", code=301)
 
