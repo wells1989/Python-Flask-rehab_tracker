@@ -208,6 +208,9 @@
                     alert("exercise added to program")
                     window.location.reload()
                 }
+                else if (response.status === 400) {
+                    alert("exercise already in program")
+                }
                 else {
                     alert("an error occurred")
                 }

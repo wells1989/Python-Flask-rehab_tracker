@@ -49,7 +49,7 @@ def details():
             if status_code == 201:
                 return"successfully added exercise", 201
             else:
-                return render_template("error_template.html", message="an error occurred"), status_code
+                return render_template("error_template.html", message=result), status_code
         except:
             return render_template("error_template.html", message="an error occurred"), 400
 
