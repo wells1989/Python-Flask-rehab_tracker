@@ -4,7 +4,8 @@
 
 - [Description](#description)
 - [Installation](#installation)
-- [Usage](#usage)
+- [UI](#ui)
+- [API](#api)
 - [Project Notes](#project-notes)
 
 ## Description
@@ -56,6 +57,7 @@ The front end incorporates a minimialist yet dynamic UI by combining JavaScript 
 
 ## Usage
 ### UI
+<a name="ui"></a>
 
 - **Initial Pages (Register / Login Forms):**
 
@@ -91,7 +93,9 @@ The front end incorporates a minimialist yet dynamic UI by combining JavaScript 
 
 
 
-### API Routes (See rehab flask app.postman_collection.json ...)
+### API 
+<a name="api"></a>
+- (See rehab flask app.postman_collection.json ...)
 
  Method | API Route                           | Description                         
 -------------------------------------------------------------------------
