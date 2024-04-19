@@ -46,8 +46,6 @@ def details():
             if 'Postman' in user_agent:
                 return jsonify({'result': result})
 
-            print(result)
-            print(status_code)
             if result != 201:
                 return render_template("error_template.html", message=result), status_code
             else:
