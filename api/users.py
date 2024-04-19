@@ -1,6 +1,7 @@
 from flask import Blueprint, session, render_template, redirect, request, jsonify
 import os
 from db import *
+from utils.email_utils import send_email, email_bodies
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 template_dir = os.path.join(current_dir, '..', 'templates')
@@ -129,9 +130,14 @@ def password_reset(user_id):
             result, status_code = db_block(change_password, old_password, new_password, logged_in_user, user_id)
 
             if status_code == 200:
+                send_email(
+                    subject='Password reset for your account',
+                    recipient=logged_in_user["email"],
+                    body=email_bodies["password_reset"]
+                    )
                 return result, status_code
             else:
                 return "Incorrect password. Please try again.", 400
         except:
-            return redirect(f'/users/profiles/{id}')
+            return redirect(f'/users/profiles/{user_id}')
 
