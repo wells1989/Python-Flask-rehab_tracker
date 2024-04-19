@@ -192,9 +192,9 @@
 
     // preventing exercise_form submission if invalid exercise selection
     addExerciseForm.addEventListener('submit', function(event) {
+        event.preventDefault();
     if (!selectedExerciseIdInput.value) {
         alert("Please select an exercise from the list.");
-        event.preventDefault();
         }
 
         const formData = new FormData(this)
@@ -206,6 +206,10 @@
             .then(response => {
                 if(response.ok) {
                     alert("exercise added to program")
+                    window.location.reload()
+                }
+                else {
+                    alert("an error occurred")
                 }
             })
             .catch(error => {

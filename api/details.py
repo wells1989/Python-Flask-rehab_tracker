@@ -20,7 +20,7 @@ def details():
 
     if request.method == "POST":
         
-        try: 
+        try:
             required_fields = ["exercise_id", "program_id"]
 
             missing_fields, status_code = request_missing_fields(request, required_fields)
@@ -46,13 +46,12 @@ def details():
             if 'Postman' in user_agent:
                 return jsonify({'result': result})
 
-            if result != 201:
-                return render_template("error_template.html", message=result), status_code
+            if status_code == 201:
+                return"successfully added exercise", 201
             else:
-                return "successfully added exercise", 201
-
+                return render_template("error_template.html", message="an error occurred"), status_code
         except:
-            return redirect(f'/programs/program/{user_id}/{program_id}')
+            return render_template("error_template.html", message="an error occurred"), 400
 
 
 # removing / updating exercises in a program
