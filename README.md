@@ -4,6 +4,7 @@
 
 - [Description](#description)
 - [Installation](#installation)
+- [Usage](#usage)
 - [UI](#ui)
 - [API](#api)
 - [Project Notes](#project-notes)
@@ -97,7 +98,7 @@ The front end incorporates a minimialist yet dynamic UI by combining JavaScript 
 <a name="api"></a>
 - (See rehab flask app.postman_collection.json ...)
 
- Method | API Route                           | Description                         
+ HTTP Method | API Route                           | Description                         
 -------------------------------------------------------------------------
 
 | POST   | http://localhost:5000/register    | Register a new user                      
