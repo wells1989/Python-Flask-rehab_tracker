@@ -45,7 +45,6 @@ def user(id):
             user_agent = request.headers.get('User-Agent', '')
             if 'Postman' in user_agent:
                 return "User updated successfully", 200
-                # slight BUG in that postman updates aren't reflected until user logs out and in again
             else:
                 return updated_user, 200
         except:

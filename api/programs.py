@@ -102,7 +102,6 @@ def programs_update_and_delete(program_id):
         try:
             fields = ["start_date", "end_date", "rating", "description"]
         
-            # checking required data
             missing_fields, status_code = request_missing_fields(request, fields)
             if status_code != 200:
                 return render_template("error_template.html", message=missing_fields), status_code

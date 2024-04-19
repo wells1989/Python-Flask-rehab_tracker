@@ -116,7 +116,7 @@
         alertContainer.innerHTML = `<div class="bg-${type}-100 border border-${type}-400 text-${type}-700 px-4 py-3 rounded relative" role="alert">${message}</div>`;
     }
 
-    // Show appropriate message based on success parameter
+    // Showing appropriate message based on success parameter
     if (isSuccess === 'true') {
         showMessage('Program created successfully.', 'green');
     } else if (isSuccess === 'false') {

@@ -36,7 +36,6 @@ def register():
         try:
             fields = ('name', 'email', 'password', 'profile_pic', 'bio')
 
-            # checking required data
             missing_fields, status_code = request_missing_fields(request, ['name', 'email', 'password'])
             if status_code != 200:
                 return render_template("error_template.html", message=missing_fields), status_code
@@ -69,7 +68,6 @@ def login():
     if request.method == "POST":
             fields = ('email', 'password')
 
-            # checking required data
             missing_fields, status_code = request_missing_fields(request, fields)
             if status_code != 200:
                 return render_template("error_template.html", message=missing_fields), status_code

@@ -3,8 +3,6 @@ import binascii
 import psycopg2
 from utils.utils import database_connect, database_close, validate_email, validate_password, admin_check, results_to_dict, db_block, update_wrapper, process_request, search_for_user
 
-logged_in_user = None 
-
 
 # selecting specific user
 def view_user(conn, cursor, id, logged_in_user):
