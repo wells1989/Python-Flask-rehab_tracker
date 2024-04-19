@@ -94,12 +94,10 @@ The front end incorporates a minimialist yet dynamic UI by combining JavaScript 
 
 
 
-### API 
 <a name="api"></a>
-- (See rehab flask app.postman_collection.json ...)
-
  HTTP Method | API Route                           | Description                         
 -------------------------------------------------------------------------
+**See rehab flask app.postman_collection.json ...**
 
 | POST   | http://localhost:5000/register    | Register a new user                      
 | POST   | http://localhost:5000/login       | Login                                                                       
